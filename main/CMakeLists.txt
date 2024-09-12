@@ -1,4 +1,4 @@
-idf_component_register(SRCS "Logger.cpp" "MPU6050Manager.cpp" 
+idf_component_register(SRCS "MPU6050Manager.cpp" 
                             "RuntimeConfig.cpp"
                             "ComponentHandler.cpp"
                             "WiFiManager.cpp"

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "include/Logger.hpp"
 #include "driver/i2c_master.h"
+#include "esp_log.h"
 
 enum class MPU6050Register : uint8_t {
     PWR_MGMT_1 = 0x6B,

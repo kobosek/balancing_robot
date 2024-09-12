@@ -1,9 +1,9 @@
 #pragma once
 
 #include "interfaces/IWebServer.hpp"
-#include "include/Logger.hpp"
 
-#include <esp_http_server.h>
+#include "esp_log.h"
+#include "esp_http_server.h"
 
 class ComponentHandler;
 

@@ -3,8 +3,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_timer.h" 
+#include "esp_log.h"
 
-#include "include/Logger.hpp"
 #include "include/ComponentHandler.hpp"
 #include "include/RuntimeConfig.hpp"
 
@@ -17,8 +17,6 @@
 
 extern "C" void app_main(void)
 {
-    Logger::setGlobalLogLevel(Logger::LogLevel::DEBUG);
-
     RuntimeConfig config;
     config.init("/spiffs/config.json");
 

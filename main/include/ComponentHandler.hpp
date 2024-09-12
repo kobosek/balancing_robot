@@ -1,5 +1,7 @@
 #pragma once
-#include "Logger.hpp"
+
+#include "esp_err.h"
+#include "esp_log.h"
 #include <vector>
 #include <memory>
 

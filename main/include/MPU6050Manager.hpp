@@ -1,6 +1,7 @@
 #pragma once
+
 #include "interfaces/IMPU6050Manager.hpp"
-#include "include/Logger.hpp"
+#include "esp_log.h"
 #include "include/mpu6050.hpp"
 
 class MPU6050Manager : public IMPU6050Manager {

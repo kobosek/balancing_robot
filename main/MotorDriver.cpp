@@ -4,7 +4,7 @@
 
 
 esp_err_t L298N::init(const IRuntimeConfig& config) {
-    Logger::info(TAG, "Initializing L298N motor driver");
+    ESP_LOGI(TAG, "Initializing L298N motor driver");
 
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE;
@@ -15,7 +15,7 @@ esp_err_t L298N::init(const IRuntimeConfig& config) {
     
     esp_err_t ret = gpio_config(&io_conf);
     if (ret != ESP_OK) {
-        Logger::error(TAG, "Failed to configure GPIO pins");
+        ESP_LOGE(TAG, "Failed to configure GPIO pins");
         return ret;
     }
 
@@ -29,7 +29,7 @@ esp_err_t L298N::init(const IRuntimeConfig& config) {
     
     ret = ledc_timer_config(&ledc_timer);
     if (ret != ESP_OK) {
-        Logger::error(TAG, "Failed to configure LEDC timer");
+        ESP_LOGE(TAG, "Failed to configure LEDC timer");
         return ret;
     }
 
@@ -54,17 +54,17 @@ esp_err_t L298N::init(const IRuntimeConfig& config) {
     for (int i = 0; i < 2; i++) {
         ret = ledc_channel_config(&ledc_channel[i]);
         if (ret != ESP_OK) {
-            Logger::error(TAG, "Failed to configure LEDC channel %d", i);
+            ESP_LOGE(TAG, "Failed to configure LEDC channel %d", i);
             return ret;
         }
     }
 
-    Logger::info(TAG, "L298N motor driver initialized successfully");
+    ESP_LOGI(TAG, "L298N motor driver initialized successfully");
     return ESP_OK;
 }
 
 esp_err_t L298N::setSpeed(float speed) const {
-    Logger::debug(TAG, "Setting L298N speed to %.2f", speed);
+    ESP_LOGD(TAG, "Setting L298N speed to %.2f", speed);
 
     if (speed < 0) {
         gpio_set_level(IN1_PIN, 1);
@@ -81,22 +81,22 @@ esp_err_t L298N::setSpeed(float speed) const {
     uint32_t duty = (uint32_t)(fabs(speed));
     esp_err_t ret = ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0, duty);
     if (ret != ESP_OK) {
-        Logger::error(TAG, "Failed to set duty for LEDC channel 0");
+        ESP_LOGE(TAG, "Failed to set duty for LEDC channel 0");
         return ret;
     }
     ret = ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_1, duty);
     if (ret != ESP_OK) {
-        Logger::error(TAG, "Failed to set duty for LEDC channel 1");
+        ESP_LOGE(TAG, "Failed to set duty for LEDC channel 1");
         return ret;
     }
     ret = ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0);
     if (ret != ESP_OK) {
-        Logger::error(TAG, "Failed to update duty for LEDC channel 0");
+        ESP_LOGE(TAG, "Failed to update duty for LEDC channel 0");
         return ret;
     }
     ret = ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_1);
     if (ret != ESP_OK) {
-        Logger::error(TAG, "Failed to update duty for LEDC channel 1");
+        ESP_LOGE(TAG, "Failed to update duty for LEDC channel 1");
         return ret;
     }
 
@@ -104,13 +104,13 @@ esp_err_t L298N::setSpeed(float speed) const {
 }
 
 esp_err_t L298N::onConfigUpdate(const IRuntimeConfig& config) {
-    Logger::info(TAG, "Updating L298N configuration");
+    ESP_LOGI(TAG, "Updating L298N configuration");
     // Add any configuration update logic here
     return ESP_OK;
 }
 
 esp_err_t MX1616H::init(const IRuntimeConfig& config) {
-    Logger::info(TAG, "Initializing MX1616H motor driver");
+    ESP_LOGI(TAG, "Initializing MX1616H motor driver");
 
     ledc_timer_config_t ledc_timer = {
         .speed_mode       = LEDC_HIGH_SPEED_MODE,
@@ -122,7 +122,7 @@ esp_err_t MX1616H::init(const IRuntimeConfig& config) {
     
     esp_err_t ret = ledc_timer_config(&ledc_timer);
     if (ret != ESP_OK) {
-        Logger::error(TAG, "Failed to configure LEDC timer");
+        ESP_LOGE(TAG, "Failed to configure LEDC timer");
         return ret;
     }
 
@@ -164,17 +164,17 @@ esp_err_t MX1616H::init(const IRuntimeConfig& config) {
     for (int i = 0; i < 4; i++) {
         ret = ledc_channel_config(&ledc_channel[i]);
         if (ret != ESP_OK) {
-            Logger::error(TAG, "Failed to configure LEDC channel %d", i);
+            ESP_LOGE(TAG, "Failed to configure LEDC channel %d", i);
             return ret;
         }
     }
 
-    Logger::info(TAG, "MX1616H motor driver initialized successfully");
+    ESP_LOGI(TAG, "MX1616H motor driver initialized successfully");
     return ESP_OK;
 }
 
 esp_err_t MX1616H::setSpeed(float speed) const {
-    Logger::debug(TAG, "Setting MX1616H speed to %.2f", speed);
+    ESP_LOGD(TAG, "Setting MX1616H speed to %.2f", speed);
 
     uint32_t duty = (uint32_t)(fabs(speed));
 
@@ -198,7 +198,7 @@ esp_err_t MX1616H::setSpeed(float speed) const {
     for (int i = 0; i < 4; i++) {
         esp_err_t ret = ledc_update_duty(LEDC_HIGH_SPEED_MODE, (ledc_channel_t)i);
         if (ret != ESP_OK) {
-            Logger::error(TAG, "Failed to update duty for LEDC channel %d", i);
+            ESP_LOGE(TAG, "Failed to update duty for LEDC channel %d", i);
             return ret;
         }
     }
@@ -207,7 +207,7 @@ esp_err_t MX1616H::setSpeed(float speed) const {
 }
 
 esp_err_t MX1616H::onConfigUpdate(const IRuntimeConfig& config) {
-    Logger::info(TAG, "Updating MX1616H configuration");
+    ESP_LOGI(TAG, "Updating MX1616H configuration");
     // Add any configuration update logic here
     return ESP_OK;
 }

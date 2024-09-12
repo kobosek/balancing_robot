@@ -1,7 +1,7 @@
 #pragma once
 
 #include "interfaces/IRuntimeConfig.hpp"
-#include "include/Logger.hpp"
+#include "esp_log.h"
 
 class RuntimeConfig : public IRuntimeConfig{
 public:

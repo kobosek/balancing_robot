@@ -6,27 +6,27 @@
 #include "cJSON.h"
 
 esp_err_t RuntimeConfig::init_nvs_Flash(void) { 
-    Logger::info(TAG, "Initializing NVS Flash");
+    ESP_LOGI(TAG, "Initializing NVS Flash");
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        Logger::warn(TAG, "NVS partition was truncated and needs to be erased");
+        ESP_LOGW(TAG, "NVS partition was truncated and needs to be erased");
         ret = nvs_flash_erase();
         if (ret != ESP_OK) {
-            Logger::error(TAG, "Failed to erase NVS: %s", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "Failed to erase NVS: %s", esp_err_to_name(ret));
             return ret;
         }
         ret = nvs_flash_init();
     }
     if (ret != ESP_OK) {
-        Logger::error(TAG, "Failed to initialize NVS Flash: %s", esp_err_to_name(ret));
+        ESP_LOGE(TAG, "Failed to initialize NVS Flash: %s", esp_err_to_name(ret));
     } else {
-        Logger::info(TAG, "NVS Flash initialized successfully");
+        ESP_LOGI(TAG, "NVS Flash initialized successfully");
     }
     return ret;
 }
 
 esp_err_t RuntimeConfig::init_spiffs(void) {
-    Logger::info(TAG, "Initializing SPIFFS");
+    ESP_LOGI(TAG, "Initializing SPIFFS");
     esp_vfs_spiffs_conf_t conf = {
         .base_path = "/spiffs",
         .partition_label = "storage",
@@ -35,45 +35,45 @@ esp_err_t RuntimeConfig::init_spiffs(void) {
     };
     esp_err_t ret = esp_vfs_spiffs_register(&conf);
     if (ret != ESP_OK) {
-        Logger::error(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
+        ESP_LOGE(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
         return ret;
     }
     
     size_t total = 0, used = 0;
     ret = esp_spiffs_info(conf.partition_label, &total, &used);
     if (ret != ESP_OK) {
-        Logger::error(TAG, "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
+        ESP_LOGE(TAG, "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
     } else {
-        Logger::info(TAG, "SPIFFS Partition size: total: %d, used: %d", total, used);
+        ESP_LOGI(TAG, "SPIFFS Partition size: total: %d, used: %d", total, used);
     }
     
     DIR* dir = opendir("/spiffs");
     if (!dir) {
-        Logger::error(TAG, "Failed to open directory %s", "/spiffs");
+        ESP_LOGE(TAG, "Failed to open directory %s", "/spiffs");
         return ESP_FAIL;
     }
     struct dirent* entry;
     while ((entry = readdir(dir)) != NULL) {
-        Logger::debug(TAG, "Found file: %s", entry->d_name);
+        ESP_LOGD(TAG, "Found file: %s", entry->d_name);
     }
     closedir(dir);   
 
-    Logger::info(TAG, "SPIFFS initialized successfully");
+    ESP_LOGI(TAG, "SPIFFS initialized successfully");
     return ESP_OK;
 }
 
 esp_err_t RuntimeConfig::init(const std::string& filename) {
-    Logger::info(TAG, "Initializing RuntimeConfig from file: %s", filename.c_str());
+    ESP_LOGI(TAG, "Initializing RuntimeConfig from file: %s", filename.c_str());
     
     esp_err_t ret = init_spiffs();
     if (ret != ESP_OK) {
-        Logger::error(TAG, "Failed to initialize SPIFFS");
+        ESP_LOGE(TAG, "Failed to initialize SPIFFS");
         return ret;
     }
 
     std::ifstream file(filename);
     if (!file.is_open()) {
-        Logger::error(TAG, "Failed to open config file: %s", filename.c_str());
+        ESP_LOGE(TAG, "Failed to open config file: %s", filename.c_str());
         return ESP_FAIL;
     }
 
@@ -82,31 +82,31 @@ esp_err_t RuntimeConfig::init(const std::string& filename) {
 
     ret = fromJson(json);
     if (ret == ESP_OK) {
-        Logger::info(TAG, "RuntimeConfig initialized successfully from %s", filename.c_str());
+        ESP_LOGI(TAG, "RuntimeConfig initialized successfully from %s", filename.c_str());
     } else {
-        Logger::error(TAG, "Failed to parse JSON from config file");
+        ESP_LOGE(TAG, "Failed to parse JSON from config file");
     }
     return ret;
 }
 
 esp_err_t RuntimeConfig::save(const std::string& filename) const {
-    Logger::info(TAG, "Saving RuntimeConfig to file: %s", filename.c_str());
+    ESP_LOGI(TAG, "Saving RuntimeConfig to file: %s", filename.c_str());
     std::string json = toJson();
     std::ofstream file(filename);
     if (!file.is_open()) {
-        Logger::error(TAG, "Failed to open config file for writing: %s", filename.c_str());
+        ESP_LOGE(TAG, "Failed to open config file for writing: %s", filename.c_str());
         return ESP_FAIL;
     }
 
     file << json;
     file.close();
 
-    Logger::info(TAG, "RuntimeConfig saved successfully");
+    ESP_LOGI(TAG, "RuntimeConfig saved successfully");
     return ESP_OK;
 }
 
 std::string RuntimeConfig::toJson() const {
-    Logger::debug(TAG, "Converting RuntimeConfig to JSON");
+    ESP_LOGD(TAG, "Converting RuntimeConfig to JSON");
     cJSON *root = cJSON_CreateObject();
 
     cJSON *wifi = cJSON_CreateObject();
@@ -142,12 +142,12 @@ std::string RuntimeConfig::toJson() const {
 }
 
 esp_err_t RuntimeConfig::fromJson(const std::string& json) {
-    Logger::debug(TAG, "Parsing JSON to RuntimeConfig");
+    ESP_LOGD(TAG, "Parsing JSON to RuntimeConfig");
     cJSON *root = cJSON_Parse(json.c_str());
     if (root == NULL) {
         const char *error_ptr = cJSON_GetErrorPtr();
         if (error_ptr != NULL) {
-            Logger::error(TAG, "JSON Parse Error before: %s", error_ptr);
+            ESP_LOGE(TAG, "JSON Parse Error before: %s", error_ptr);
         }
         return ESP_FAIL;
     }
@@ -157,14 +157,14 @@ esp_err_t RuntimeConfig::fromJson(const std::string& json) {
     if (wifi) {
         if ((item = cJSON_GetObjectItem(wifi, "ssid")) && cJSON_IsString(item)) {
             wifi_ssid = item->valuestring;
-            Logger::info(TAG, "Loaded WiFi SSID: %s", wifi_ssid.c_str());
+            ESP_LOGI(TAG, "Loaded WiFi SSID: %s", wifi_ssid.c_str());
         }
         if ((item = cJSON_GetObjectItem(wifi, "password")) && cJSON_IsString(item)) {
             wifi_password = item->valuestring;
-            Logger::info(TAG, "Loaded WiFi password (not shown for security)");
+            ESP_LOGI(TAG, "Loaded WiFi password (not shown for security)");
         }
     } else {
-        Logger::warn(TAG, "WiFi configuration not found in JSON");
+        ESP_LOGW(TAG, "WiFi configuration not found in JSON");
     }
 
     cJSON *pid = cJSON_GetObjectItem(root, "pid");
@@ -177,30 +177,30 @@ esp_err_t RuntimeConfig::fromJson(const std::string& json) {
         if ((item = cJSON_GetObjectItem(pid, "output_max")) && cJSON_IsNumber(item)) pid_output_max = item->valuedouble;
         if ((item = cJSON_GetObjectItem(pid, "iterm_min")) && cJSON_IsNumber(item)) pid_iterm_min = item->valuedouble;
         if ((item = cJSON_GetObjectItem(pid, "iterm_max")) && cJSON_IsNumber(item)) pid_iterm_max = item->valuedouble;
-        Logger::info(TAG, "Loaded PID configuration");
+        ESP_LOGI(TAG, "Loaded PID configuration");
     } else {
-        Logger::warn(TAG, "PID configuration not found in JSON");
+        ESP_LOGW(TAG, "PID configuration not found in JSON");
     }
 
     cJSON *mpu6050 = cJSON_GetObjectItem(root, "mpu6050");
     if (mpu6050) {
         if ((item = cJSON_GetObjectItem(mpu6050, "calibration_samples")) && cJSON_IsNumber(item)) 
             mpu6050_calibration_samples = item->valueint;
-        Logger::info(TAG, "Loaded MPU6050 configuration");
+        ESP_LOGI(TAG, "Loaded MPU6050 configuration");
     } else {
-        Logger::warn(TAG, "MPU6050 configuration not found in JSON");
+        ESP_LOGW(TAG, "MPU6050 configuration not found in JSON");
     }
 
     cJSON *main_loop = cJSON_GetObjectItem(root, "main_loop");
     if (main_loop) {
         if ((item = cJSON_GetObjectItem(main_loop, "interval_ms")) && cJSON_IsNumber(item)) 
             main_loop_interval_ms = item->valueint;
-        Logger::info(TAG, "Loaded main loop configuration");
+        ESP_LOGI(TAG, "Loaded main loop configuration");
     } else {
-        Logger::warn(TAG, "Main loop configuration not found in JSON");
+        ESP_LOGW(TAG, "Main loop configuration not found in JSON");
     }
 
     cJSON_Delete(root);
-    Logger::info(TAG, "Configuration loaded from JSON successfully");
+    ESP_LOGI(TAG, "Configuration loaded from JSON successfully");
     return ESP_OK;
 }
