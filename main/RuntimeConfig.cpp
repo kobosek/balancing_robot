@@ -10,11 +10,18 @@ esp_err_t RuntimeConfig::init_nvs_Flash(void) {
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         Logger::warn(TAG, "NVS partition was truncated and needs to be erased");
-        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_erase();
+        if (ret != ESP_OK) {
+            Logger::error(TAG, "Failed to erase NVS: %s", esp_err_to_name(ret));
+            return ret;
+        }
         ret = nvs_flash_init();
     }
-    ESP_ERROR_CHECK(ret);
-    Logger::info(TAG, "NVS Flash initialized successfully");
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to initialize NVS Flash: %s", esp_err_to_name(ret));
+    } else {
+        Logger::info(TAG, "NVS Flash initialized successfully");
+    }
     return ret;
 }
 

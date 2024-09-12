@@ -14,18 +14,24 @@ esp_err_t WiFiManager::initNVS() {
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         Logger::warn(TAG, "NVS partition was truncated and needs to be erased");
-        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_erase();
+        if (ret != ESP_OK) {
+            Logger::error(TAG, "Failed to erase NVS: %s", esp_err_to_name(ret));
+            return ret;
+        }
         ret = nvs_flash_init();
     }
-    ESP_ERROR_CHECK(ret);
-    Logger::info(TAG, "NVS initialized successfully");
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to initialize NVS: %s", esp_err_to_name(ret));
+    } else {
+        Logger::info(TAG, "NVS initialized successfully");
+    }
     return ret;
 }
 
 esp_err_t WiFiManager::init(const IRuntimeConfig& config) {
     Logger::info(TAG, "Initializing WiFiManager");
 
-    // Initialize NVS
     esp_err_t ret = initNVS();
     if (ret != ESP_OK) {
         Logger::error(TAG, "Failed to initialize NVS");
@@ -33,17 +39,39 @@ esp_err_t WiFiManager::init(const IRuntimeConfig& config) {
     }
 
     s_wifiEventGroup = xEventGroupCreate();
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    ret = esp_netif_init();
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to initialize ESP-NETIF: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    ret = esp_event_loop_create_default();
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to create event loop: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
     esp_netif_create_default_wifi_sta();
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    ret = esp_wifi_init(&cfg);
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to initialize WiFi: %s", esp_err_to_name(ret));
+        return ret;
+    }
 
     esp_event_handler_instance_t instanceAnyId;
     esp_event_handler_instance_t instanceGotIp;
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &eventHandler, this, &instanceAnyId));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &eventHandler, this, &instanceGotIp));
+    ret = esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &eventHandler, this, &instanceAnyId);
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to register WIFI_EVENT handler: %s", esp_err_to_name(ret));
+        return ret;
+    }
+    ret = esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &eventHandler, this, &instanceGotIp);
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to register IP_EVENT handler: %s", esp_err_to_name(ret));
+        return ret;
+    }
 
     Logger::info(TAG, "WiFiManager initialized successfully");
     return connect(config);
@@ -64,9 +92,23 @@ esp_err_t WiFiManager::connect(const IRuntimeConfig& config) {
     strncpy((char*)wifi_config.sta.password, password.c_str(), sizeof(wifi_config.sta.password) - 1);
     wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
 
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-    ESP_ERROR_CHECK(esp_wifi_start());
+    esp_err_t ret = esp_wifi_set_mode(WIFI_MODE_STA);
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to set WiFi mode: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    ret = esp_wifi_set_config(WIFI_IF_STA, &wifi_config);
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to set WiFi configuration: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    ret = esp_wifi_start();
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to start WiFi: %s", esp_err_to_name(ret));
+        return ret;
+    }
 
     Logger::info(TAG, "WiFi initialization finished. Waiting for connection result...");
 
@@ -89,6 +131,7 @@ esp_err_t WiFiManager::connect(const IRuntimeConfig& config) {
 }
 
 void WiFiManager::eventHandler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+    WiFiManager* self = static_cast<WiFiManager*>(arg);
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         Logger::info(TAG, "WiFi station started, attempting to connect");
         esp_wifi_connect();
