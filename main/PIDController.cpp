@@ -1,78 +1,91 @@
 #include "include/PIDController.hpp"
 #include "include/RuntimeConfig.hpp"
-
-#include "esp_log.h"
 #include <algorithm>
 
-static const char* TAG = "PIDController";  // Add this line for logging
-
-esp_err_t PIDController::setParams(const IRuntimeConfig& p_config) {
-    setKp(p_config.getPidKp());
-    setKi(p_config.getPidKi());
-    setKd(p_config.getPidKd());
-    setSetpoint(p_config.getPidTargetAngle());
-    setOutputLimits(p_config.getPidOutputMin(), p_config.getPidOutputMax());
-    setItermLimits(p_config.getPidItermMin(), p_config.getPidItermMax());   
+esp_err_t PIDController::setParams(const IRuntimeConfig& config) {
+    Logger::info(TAG, "Setting PID parameters");
+    setKp(config.getPidKp());
+    setKi(config.getPidKi());
+    setKd(config.getPidKd());
+    setSetpoint(config.getPidTargetAngle());
+    setOutputLimits(config.getPidOutputMin(), config.getPidOutputMax());
+    setItermLimits(config.getPidItermMin(), config.getPidItermMax());   
+    Logger::debug(TAG, "PID parameters set - Kp: %.2f, Ki: %.2f, Kd: %.2f, Setpoint: %.2f", 
+                  m_kp, m_ki, m_kd, m_setpoint);
     return ESP_OK;
 }
 
-
-esp_err_t PIDController::init(const IRuntimeConfig& p_config) {
-    return setParams(p_config);
+esp_err_t PIDController::init(const IRuntimeConfig& config) {
+    Logger::info(TAG, "Initializing PID Controller");
+    esp_err_t ret = setParams(config);
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to set initial PID parameters");
+        return ret;
+    }
+    Logger::info(TAG, "PID Controller initialized successfully");
+    return ESP_OK;
 }
 
-float PIDController::compute(float& p_integral, float& p_lastError, float p_currentValue, float p_dt) const {
-    float l_currentError = m_setpoint - p_currentValue;
+float PIDController::compute(float& integral, float& lastError, float currentValue, float dt) const {
+    float currentError = m_setpoint - currentValue;
     
     // Proportional term
-    float pTerm = m_kp * l_currentError;
+    float pTerm = m_kp * currentError;
     
     // Integral term 
-    p_integral += l_currentError * p_dt;
-    p_integral = std::max(m_iTermMin, std::min(p_integral, m_iTermMax));
-    float iTerm = m_ki * p_integral;
+    integral += currentError * dt;
+    integral = std::max(m_iTermMin, std::min(integral, m_iTermMax));
+    float iTerm = m_ki * integral;
     
     // Derivative term
-    float dTerm = m_kd * (l_currentError - p_lastError) / p_dt;
-    p_lastError = l_currentError;
+    float dTerm = m_kd * (currentError - lastError) / dt;
+    lastError = currentError;
     
     // Calculate total output
     float output = pTerm + iTerm + dTerm;
     
     // Limit output value
     output = std::max(m_outputMin, std::min(output, m_outputMax));
-
-    //ESP_LOGI("PID", "Target: %.2f, Input: %.2f, Error: %.2f, Output: %.2f", m_target, input, error, output);
-    //ESP_LOGI("PID", "P: %.2f, I: %.2f, D: %.2f", pTerm, iTerm, dTerm);
+    
+    Logger::verbose(TAG, "PID Computation - Error: %.2f, P: %.2f, I: %.2f, D: %.2f, Output: %.2f", 
+                    currentError, pTerm, iTerm, dTerm, output);
     
     return output;
 }
 
 esp_err_t PIDController::onConfigUpdate(const IRuntimeConfig& config) {
+    Logger::info(TAG, "Updating PID Controller configuration");
     return setParams(config);
 }
 
 void PIDController::setSetpoint(float setpoint) {
     m_setpoint = setpoint;
+    Logger::debug(TAG, "PID setpoint updated to %.2f", setpoint);
 }
 
 void PIDController::setKp(float kp) {
     m_kp = kp;
+    Logger::debug(TAG, "PID Kp updated to %.2f", kp);
 }
 
 void PIDController::setKi(float ki) {
     m_ki = ki;
+    Logger::debug(TAG, "PID Ki updated to %.2f", ki);
 }
+
 void PIDController::setKd(float kd) {
     m_kd = kd;
+    Logger::debug(TAG, "PID Kd updated to %.2f", kd);
 }
 
 void PIDController::setOutputLimits(float min, float max) {
     m_outputMin = min;
     m_outputMax = max;
+    Logger::debug(TAG, "PID output limits updated to [%.2f, %.2f]", min, max);
 }
 
 void PIDController::setItermLimits(float min, float max) {
     m_iTermMin = min;
     m_iTermMax = max;
+    Logger::debug(TAG, "PID integral term limits updated to [%.2f, %.2f]", min, max);
 }

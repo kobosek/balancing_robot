@@ -8,42 +8,70 @@
 #include <algorithm>
 #include "esp_log.h"
 
-static const char* TAG = "ComponentHanlder";
+esp_err_t ComponentHandler::init() {
+    Logger::info(TAG, "Initializing ComponentHandler");
 
-void ComponentHandler::init() {
     wifiManager = std::make_shared<WiFiManager>();
-    wifiManager->init(runtimeConfig);
-    
+    esp_err_t ret = wifiManager->init(runtimeConfig);
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to initialize WiFiManager");
+        return ret;
+    }
+
     webServer = std::make_shared<WebServer>(*this, runtimeConfig);
-    webServer->init(runtimeConfig);
+    ret = webServer->init(runtimeConfig);
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to initialize WebServer");
+        return ret;
+    }
 
     motorDriver = std::make_shared<MX1616H>();
-    motorDriver->init(runtimeConfig);
+    ret = motorDriver->init(runtimeConfig);
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to initialize MotorDriver");
+        return ret;
+    }
 
     mpu6050Manager = std::make_shared<MPU6050Manager>();
-    mpu6050Manager->init(runtimeConfig);
+    ret = mpu6050Manager->init(runtimeConfig);
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to initialize MPU6050Manager");
+        return ret;
+    }
 
-    //mpu6050_manager->setCalibrationSamples(runtimeConfig.getMpu6050CalibrationSamples());
     pidController = std::make_shared<PIDController>();
-    pidController->init(runtimeConfig);
+    ret = pidController->init(runtimeConfig);
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Failed to initialize PIDController");
+        return ret;
+    }
 
     registerObserver(wifiManager);
     registerObserver(webServer);
     registerObserver(motorDriver);
     registerObserver(pidController);
     registerObserver(mpu6050Manager);
+
+    Logger::info(TAG, "ComponentHandler initialization complete");
+    return ESP_OK;
 }
 
 void ComponentHandler::registerObserver(std::shared_ptr<IConfigObserver> observer) {
     observers.push_back(observer);
+    Logger::debug(TAG, "Registered observer");
 }
 
 void ComponentHandler::unregisterObserver(std::shared_ptr<IConfigObserver> observer) {
     observers.erase(std::remove(observers.begin(), observers.end(), observer), observers.end());
+    Logger::debug(TAG, "Unregistered observer");
 }
 
 void ComponentHandler::notifyConfigUpdate() {
+    Logger::info(TAG, "Notifying all observers of configuration update");
     for (auto observer : observers) {
-        observer->onConfigUpdate(runtimeConfig);
+        esp_err_t ret = observer->onConfigUpdate(runtimeConfig);
+        if (ret != ESP_OK) {
+            Logger::warn(TAG, "Observer failed to update configuration");
+        }
     }
 }

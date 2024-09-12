@@ -1,6 +1,7 @@
 #pragma once
 
 #include "interfaces/IRuntimeConfig.hpp"
+#include "include/Logger.hpp"
 
 class RuntimeConfig : public IRuntimeConfig{
 public:
@@ -45,6 +46,7 @@ public:
     esp_err_t fromJson(const std::string& json) override;
 
 private:
+    static constexpr const char* TAG = "RuntimeConfig";
     esp_err_t init_spiffs();
     esp_err_t init_nvs_Flash();
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "interfaces/IConfigObserver.hpp"
+#include "include/Logger.hpp"
 
 #include "esp_wifi.h"
 #include "esp_event.h"
@@ -18,6 +19,8 @@ public:
     esp_err_t onConfigUpdate(const IRuntimeConfig&) override;
 
 private:
+    static constexpr const char* TAG = "WiFiManager";
+
     static void eventHandler(void*, esp_event_base_t, int32_t, void*);
     esp_err_t connect(const IRuntimeConfig&);
     esp_err_t initNVS();
@@ -27,5 +30,4 @@ private:
     static const int WIFI_FAIL_BIT = BIT1;
     static const int MAXIMUM_RETRY = 5;
     static int s_retryNum;
-    static const char* TAG;
 };

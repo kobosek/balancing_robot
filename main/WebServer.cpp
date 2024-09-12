@@ -3,72 +3,70 @@
 #include "include/RuntimeConfig.hpp"
 
 #include "esp_spiffs.h"
-#include "esp_log.h"
 #include "esp_vfs.h"
 #include <string.h>
 
 #define MAX_FILE_PATH_LENGTH 256
 #define CHUNK_SIZE 1024
 
-static const char* TAG = "WebServer";  // Add this line for logging
-
 WebServer::WebServer(ComponentHandler& componentHandler, IRuntimeConfig& runtimeConfig)
     : server(nullptr), m_angle(0), m_output(0), componentHandler(componentHandler), runtimeConfig(runtimeConfig) {}
 
 esp_err_t WebServer::init(const IRuntimeConfig& runtimeConfig) {
-    ESP_LOGI(TAG, "Initializing web server");
+    Logger::info(TAG, "Initializing web server");
     
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.lru_purge_enable = true;
 
     esp_err_t ret = httpd_start(&server, &config);
-    if (ret == ESP_OK) {
-        ESP_LOGI(TAG, "Web server started successfully");
-
-        httpd_uri_t data_uri = {
-            .uri       = "/data",
-            .method    = HTTP_GET,
-            .handler   = data_get_handler,
-            .user_ctx  = this
-        };
-        httpd_register_uri_handler(server, &data_uri);
-
-        httpd_uri_t root_uri = {
-            .uri       = "/",
-            .method    = HTTP_GET,
-            .handler   = static_get_handler,
-            .user_ctx  = this
-        };
-        httpd_register_uri_handler(server, &root_uri);
-
-        httpd_uri_t file_download = {
-            .uri       = "/*",
-            .method    = HTTP_GET,
-            .handler   = static_get_handler,
-            .user_ctx  = this
-        };
-        httpd_register_uri_handler(server, &file_download);
-        
-        httpd_uri_t get_config_uri = {
-            .uri       = "/api/config",
-            .method    = HTTP_GET,
-            .handler   = get_config_handler,
-            .user_ctx  = this
-        };
-        httpd_register_uri_handler(server, &get_config_uri);
-
-        httpd_uri_t set_config_uri = {
-            .uri       = "/api/config",
-            .method    = HTTP_POST,
-            .handler   = set_config_handler,
-            .user_ctx  = this
-        };
-        httpd_register_uri_handler(server, &set_config_uri);
-
-        ESP_LOGI(TAG, "All URI handlers registered");
-    } else {
-        ESP_LOGE(TAG, "Error starting server!");
+    if (ret != ESP_OK) {
+        Logger::error(TAG, "Error starting server!");
+        return ret;
     }
+
+    Logger::info(TAG, "Web server started successfully");
+
+    httpd_uri_t data_uri = {
+        .uri       = "/data",
+        .method    = HTTP_GET,
+        .handler   = data_get_handler,
+        .user_ctx  = this
+    };
+    httpd_register_uri_handler(server, &data_uri);
+
+    httpd_uri_t root_uri = {
+        .uri       = "/",
+        .method    = HTTP_GET,
+        .handler   = static_get_handler,
+        .user_ctx  = this
+    };
+    httpd_register_uri_handler(server, &root_uri);
+
+    httpd_uri_t file_download = {
+        .uri       = "/*",
+        .method    = HTTP_GET,
+        .handler   = static_get_handler,
+        .user_ctx  = this
+    };
+    httpd_register_uri_handler(server, &file_download);
+    
+    httpd_uri_t get_config_uri = {
+        .uri       = "/api/config",
+        .method    = HTTP_GET,
+        .handler   = get_config_handler,
+        .user_ctx  = this
+    };
+    httpd_register_uri_handler(server, &get_config_uri);
+
+    httpd_uri_t set_config_uri = {
+        .uri       = "/api/config",
+        .method    = HTTP_POST,
+        .handler   = set_config_handler,
+        .user_ctx  = this
+    };
+    httpd_register_uri_handler(server, &set_config_uri);
+
+    Logger::info(TAG, "All URI handlers registered");
     return ESP_OK;
 }
 
@@ -107,9 +105,11 @@ esp_err_t WebServer::handle_static_get(httpd_req_t *req) {
         strlcat(filepath, req->uri, sizeof(filepath));
     }
     
+    Logger::debug(TAG, "Serving file: %s", filepath);
+
     FILE* file = fopen(filepath, "r");
     if (file == NULL) {
-        ESP_LOGE(TAG, "Failed to open file : %s", filepath);
+        Logger::error(TAG, "Failed to open file : %s", filepath);
         httpd_resp_send_404(req);
         return ESP_FAIL;
     }
@@ -119,7 +119,7 @@ esp_err_t WebServer::handle_static_get(httpd_req_t *req) {
     char *chunk = (char *)malloc(CHUNK_SIZE);
     if (chunk == NULL) {
         fclose(file);
-        ESP_LOGE(TAG, "Failed to allocate memory for file reading");
+        Logger::error(TAG, "Failed to allocate memory for file reading");
         httpd_resp_send_500(req);
         return ESP_FAIL;
     }
@@ -131,7 +131,7 @@ esp_err_t WebServer::handle_static_get(httpd_req_t *req) {
             if (httpd_resp_send_chunk(req, chunk, chunksize) != ESP_OK) {
                 fclose(file);
                 free(chunk);
-                ESP_LOGE(TAG, "File sending failed!");
+                Logger::error(TAG, "File sending failed!");
                 httpd_resp_sendstr_chunk(req, NULL);
                 httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to send file");
                 return ESP_FAIL;
@@ -142,6 +142,7 @@ esp_err_t WebServer::handle_static_get(httpd_req_t *req) {
     fclose(file);
     free(chunk);
     httpd_resp_send_chunk(req, NULL, 0);
+    Logger::debug(TAG, "File sent successfully: %s", filepath);
     return ESP_OK;
 }
 
@@ -155,7 +156,8 @@ esp_err_t WebServer::handle_data_get(httpd_req_t *req) {
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
     
     httpd_resp_send(req, resp, strlen(resp));
- 
+    
+    Logger::verbose(TAG, "Sent telemetry data: %s", resp);
     return ESP_OK;
 }
 
@@ -167,9 +169,9 @@ esp_err_t WebServer::handle_get_config(httpd_req_t *req) {
     httpd_resp_set_hdr(req, "Pragma", "no-cache");
     httpd_resp_sendstr(req, json.c_str());
    
+    Logger::debug(TAG, "Sent configuration data");
     return ESP_OK;
 }
-
 
 esp_err_t WebServer::handle_set_config(httpd_req_t *req) {
     char* content = nullptr;
@@ -177,6 +179,7 @@ esp_err_t WebServer::handle_set_config(httpd_req_t *req) {
 
     content = static_cast<char*>(malloc(content_len + 1));
     if (content == nullptr) {
+        Logger::error(TAG, "Failed to allocate memory for request content");
         httpd_resp_send_500(req);
         return ESP_FAIL;
     }
@@ -185,14 +188,18 @@ esp_err_t WebServer::handle_set_config(httpd_req_t *req) {
     if (ret <= 0) {
         free(content);
         if (ret == HTTPD_SOCK_ERR_TIMEOUT) {
+            Logger::error(TAG, "Timeout occurred while receiving request");
             httpd_resp_send_408(req);
         }
         return ESP_FAIL;
     }
     content[content_len] = '\0';
 
+    Logger::debug(TAG, "Received configuration update request");
+
     if (runtimeConfig.fromJson(std::string(content)) != ESP_OK) {
         free(content);
+        Logger::error(TAG, "Failed to parse configuration JSON");
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid JSON");
         return ESP_FAIL;
     }
@@ -200,6 +207,7 @@ esp_err_t WebServer::handle_set_config(httpd_req_t *req) {
     free(content);
 
     if (runtimeConfig.save() != ESP_OK) {
+        Logger::error(TAG, "Failed to save configuration");
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to save configuration");
         return ESP_FAIL;
     }
@@ -209,6 +217,7 @@ esp_err_t WebServer::handle_set_config(httpd_req_t *req) {
     httpd_resp_set_type(req, "application/json");
     httpd_resp_sendstr(req, "{\"status\":\"success\",\"message\":\"Configuration updated and applied successfully\"}");
 
+    Logger::info(TAG, "Configuration updated successfully");
     return ESP_OK;
 }
 
@@ -226,8 +235,11 @@ void WebServer::set_content_type_from_file(httpd_req_t *req, const char *filenam
     } else {
         httpd_resp_set_type(req, "text/plain");
     }
+    Logger::debug(TAG, "Set content type for file: %s", filename);
 }
 
 esp_err_t WebServer::onConfigUpdate(const IRuntimeConfig&) {
+    Logger::info(TAG, "Configuration update received");
+    // Implement any necessary updates for the WebServer here
     return ESP_OK;
 }

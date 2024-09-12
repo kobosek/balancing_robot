@@ -4,6 +4,7 @@
 #include "freertos/task.h"
 #include "esp_timer.h" 
 
+#include "include/Logger.hpp"
 #include "include/ComponentHandler.hpp"
 #include "include/RuntimeConfig.hpp"
 
@@ -15,7 +16,9 @@
 #define LOOP_INTERVAL_MS 10
 
 extern "C" void app_main(void)
-{    
+{
+    Logger::setGlobalLogLevel(Logger::LogLevel::DEBUG);
+
     RuntimeConfig config;
     config.init("/spiffs/config.json");
 
@@ -31,7 +34,7 @@ extern "C" void app_main(void)
         int64_t now = esp_timer_get_time();
         float dt = (now - last_run) / 1000000.0f;  // Convert to seconds
 
-        float pitch = handler.getMPU6050Manager().calculatePitch(pitch);
+        pitch = handler.getMPU6050Manager().calculatePitch(pitch);
         float output = handler.getPIDController().compute(integral, lastError, pitch, dt);
 
         handler.getMotorDriver().setSpeed(output);

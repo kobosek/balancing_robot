@@ -1,6 +1,7 @@
 #pragma once
 
 #include "interfaces/IPIDController.hpp"
+#include "include/Logger.hpp"
 
 class PIDController : public IPIDController {
 public:
@@ -12,10 +13,10 @@ public:
 
     float compute(float&, float&, float, float) const override;
 private:
+    static constexpr const char* TAG = "PIDController";
+    
     esp_err_t setParams(const IRuntimeConfig&);
-
     void setSetpoint(float);
-
     void setKp(float);
     void setKi(float);
     void setKd(float);

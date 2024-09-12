@@ -1,5 +1,6 @@
 #pragma once
 
+#include "include/Logger.hpp"
 #include "driver/i2c_master.h"
 
 enum class MPU6050Register : uint8_t {
@@ -65,10 +66,12 @@ public:
     esp_err_t setGyroRange(MPU6050GyroConfig);
 
 private:
+    static constexpr const char* TAG = "MPU6050";
+
     i2c_master_dev_handle_t _dev_handle;
     float _accel_scale;
     float _gyro_scale;
 
-    esp_err_t writeRegister(MPU6050Register, auto);
+    esp_err_t writeRegister(MPU6050Register, uint8_t);
     esp_err_t readRegisters(MPU6050Register, uint8_t*, size_t) const;
 };

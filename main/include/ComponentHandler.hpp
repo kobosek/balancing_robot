@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Logger.hpp"
 #include <vector>
 #include <memory>
 
@@ -14,7 +14,7 @@ class IRuntimeConfig;
 class ComponentHandler {
 public:
     ComponentHandler(IRuntimeConfig& config) : runtimeConfig(config) {}
-    void init();
+    esp_err_t init();
     void notifyConfigUpdate();
 
     const IWiFiManager& getWifiManager() { return *wifiManager; }
@@ -24,6 +24,8 @@ public:
     const IMPU6050Manager& getMPU6050Manager() { return *mpu6050Manager; }
 
 private:
+    static constexpr const char* TAG = "Component Handler";
+
     void registerObserver(std::shared_ptr<IConfigObserver>);
     void unregisterObserver(std::shared_ptr<IConfigObserver>);
 

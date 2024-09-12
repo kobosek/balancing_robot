@@ -1,6 +1,8 @@
 #pragma once
 
 #include "interfaces/IWebServer.hpp"
+#include "include/Logger.hpp"
+
 #include <esp_http_server.h>
 
 class ComponentHandler;
@@ -14,6 +16,7 @@ class WebServer : public IWebServer {
         void update_telemetry(float, float);
 
     private:
+        static constexpr const char* TAG = "WebServer";
         httpd_handle_t server;
         float m_angle;
         float m_output;
