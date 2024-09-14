@@ -1,4 +1,6 @@
-idf_component_register(SRCS "MPU6050Manager.cpp" 
+idf_component_register(SRCS "SensorTask.cpp" "PIDTask.cpp" "MotorControlTask.cpp" "TelemetryTask.cpp" "ConfigurationTask.cpp" 
+                            "StateMachine.cpp" 
+                            "MPU6050Manager.cpp" 
                             "RuntimeConfig.cpp"
                             "ComponentHandler.cpp"
                             "WiFiManager.cpp"

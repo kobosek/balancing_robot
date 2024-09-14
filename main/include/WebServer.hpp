@@ -2,37 +2,29 @@
 
 #include "interfaces/IWebServer.hpp"
 
-#include "esp_log.h"
-#include "esp_http_server.h"
-
-class ComponentHandler;
+class IComponentHandler;
 
 class WebServer : public IWebServer {
     public:
-        WebServer(ComponentHandler&, IRuntimeConfig&);
         esp_err_t init(const IRuntimeConfig&) override;
-        esp_err_t onConfigUpdate(const IRuntimeConfig&) override;
-        
-        void update_telemetry(float, float);
+        void update_telemetry(const TelemetryData& telemetry) override;
+        bool hasConfigurationRequest() override;
+        PIDConfig getConfigurationRequest() override;
+        void notifyConfigurationUpdated() override;
 
     private:
         static constexpr const char* TAG = "WebServer";
-        httpd_handle_t server;
-        float m_angle;
-        float m_output;
+        static constexpr int CONFIG_QUEUE_SIZE = 1;
 
-        ComponentHandler& componentHandler;
-        IRuntimeConfig& runtimeConfig;
+        httpd_handle_t m_server;
+        QueueHandle_t m_configRequestQueue;
+        SemaphoreHandle_t m_telemetryMutex;
+        TelemetryData m_lastTelemetry;
+        bool m_configUpdated;
 
-        static esp_err_t static_get_handler(httpd_req_t*);
-        static esp_err_t data_get_handler(httpd_req_t*);
-        static esp_err_t get_config_handler(httpd_req_t*);
-        static esp_err_t set_config_handler(httpd_req_t*);
+        static esp_err_t indexHandler(httpd_req_t *req);
+        static esp_err_t telemetryHandler(httpd_req_t *req);
+        static esp_err_t configHandler(httpd_req_t *req);
 
-        esp_err_t handle_static_get(httpd_req_t*);
-        esp_err_t handle_data_get(httpd_req_t*);
-        esp_err_t handle_get_config(httpd_req_t*);
-        esp_err_t handle_set_config(httpd_req_t*);
-
-        void set_content_type_from_file(httpd_req_t*, const char*);
+        void setupRoutes();
 };

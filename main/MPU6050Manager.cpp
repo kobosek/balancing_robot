@@ -75,6 +75,14 @@ float MPU6050Manager::calculatePitch(float& pitch) const {
     return pitch;
 }
 
+float MPU6050Manager::calculateRoll(float& pitch) const {
+    return 0.0f; //not implemented yet
+}
+
+float MPU6050Manager::calculateYaw(float& pitch) const {
+    return 0.0f; //not implemented yet
+}
+
 esp_err_t MPU6050Manager::calibrateGyro() {
     ESP_LOGI(TAG, "Calibrating gyroscope...");
     float omega_x, omega_y, omega_z;
@@ -91,29 +99,5 @@ esp_err_t MPU6050Manager::calibrateGyro() {
 
     _gyro_error /= CALIBRATION_SAMPLES;
     ESP_LOGI(TAG, "Calibration complete. Gyro error: %.2f", _gyro_error);
-    return ESP_OK;
-}
-
-esp_err_t MPU6050Manager::onConfigUpdate(const IRuntimeConfig& config) {
-    ESP_LOGI(TAG, "Updating MPU6050Manager configuration");
-    
-    // Here you can add any configuration updates specific to the MPU6050
-    // For example, if you want to change the accelerometer or gyroscope range based on config:
-    
-    // esp_err_t ret = _sensor.setAccelRange(static_cast<MPU6050AccelConfig>(config.getMpu6050AccelRange()));
-    // if (ret != ESP_OK) {
-    //     ESP_LOGE(TAG, "Failed to update accelerometer range: %s", esp_err_to_name(ret));
-    //     return ret;
-    // }
-    
-    // ret = _sensor.setGyroRange(static_cast<MPU6050GyroConfig>(config.getMpu6050GyroRange()));
-    // if (ret != ESP_OK) {
-    //     ESP_LOGE(TAG, "Failed to update gyroscope range: %s", esp_err_to_name(ret));
-    //     return ret;
-    // }
-
-    // You might also want to recalibrate the gyroscope after a configuration change
-    // return calibrateGyro();
-
     return ESP_OK;
 }

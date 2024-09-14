@@ -1,4 +1,6 @@
 #pragma once
+
+#include "interfaces/ITask.hpp"
 #include "esp_err.h"
 #include <string>
 
@@ -9,23 +11,8 @@ class IRuntimeConfig {
         virtual ~IRuntimeConfig() = default;
 
 
-        virtual float getPidKp() const = 0;
-        virtual float getPidKi() const = 0;
-        virtual float getPidKd() const = 0;
-        virtual float getPidTargetAngle() const = 0;
-        virtual float getPidOutputMin() const = 0;
-        virtual float getPidOutputMax() const = 0;
-        virtual float getPidItermMin() const = 0;
-        virtual float getPidItermMax() const = 0;
-
-        virtual void setPidKp(float) = 0;
-        virtual void setPidKi(float) = 0;
-        virtual void setPidKd(float) = 0;
-        virtual void setPidTargetAngle(float) = 0;
-        virtual void setPidOutputMin(float) = 0;
-        virtual void setPidOutputMax(float) = 0;
-        virtual void setPidItermMin(float) = 0;
-        virtual void setPidItermMax(float) = 0;
+        virtual PIDConfig getPidConfig() const = 0;
+        virtual void setPidConfig(PIDConfig) = 0;
 
         // MPU6050 parameters
         virtual int getMpu6050CalibrationSamples() const = 0;

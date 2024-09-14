@@ -151,10 +151,3 @@ void WiFiManager::eventHandler(void* arg, esp_event_base_t event_base, int32_t e
         xEventGroupSetBits(s_wifiEventGroup, WIFI_CONNECTED_BIT);
     }
 }
-
-esp_err_t WiFiManager::onConfigUpdate(const IRuntimeConfig& config) {
-    ESP_LOGI(TAG, "Updating WiFi configuration");
-    // Disconnect from current network
-    // Connect to new network with updated configuration
-    return ESP_OK;
-}

@@ -52,10 +52,6 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-        canvas {
-            border: 1px solid #ddd;
-            margin-top: 20px;
-        }
         .data-container {
             display: flex;
             justify-content: space-around;
@@ -77,6 +73,10 @@
         }
         .visualization-section {
             flex: 1;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -169,59 +169,21 @@
             saveConfigBtn.addEventListener('click', saveConfig);
 
             function loadConfig() {
-                fetch('/api/config')
+                fetch('/config')
                     .then(response => response.json())
                     .then(data => {
-                        document.getElementById('pidKp').value = data.pid.kp;
-                        document.getElementById('pidKi').value = data.pid.ki;
-                        document.getElementById('pidKd').value = data.pid.kd;
-                        document.getElementById('pidTargetAngle').value = data.pid.target_angle;
-                        document.getElementById('pidOutputMin').value = data.pid.output_min;
-                        document.getElementById('pidOutputMax').value = data.pid.output_max;
-                        document.getElementById('pidItermMin').value = data.pid.iterm_min;
-                        document.getElementById('pidItermMax').value = data.pid.iterm_max;
-                        document.getElementById('mpu6050CalibrationSamples').value = data.mpu6050.calibration_samples;
-                        document.getElementById('mainLoopIntervalMs').value = data.main_loop.interval_ms;
+                        document.getElementById('pidKp').value = data.kp;
+                        document.getElementById('pidKi').value = data.ki;
+                        document.getElementById('pidKd').value = data.kd;
+                        document.getElementById('pidTargetAngle').value = data.targetAngle;
+                        document.getElementById('pidOutputMin').value = data.outputMin;
+                        document.getElementById('pidOutputMax').value = data.outputMax;
+                        document.getElementById('pidItermMin').value = data.itermMin;
+                        document.getElementById('pidItermMax').value = data.itermMax;
+                        document.getElementById('mpu6050CalibrationSamples').value = data.calibrationSamples;
+                        document.getElementById('mainLoopIntervalMs').value = data.mainLoopInterval;
                     })
                     .catch(error => console.error('Error loading configuration:', error));
-            }
-
-            function saveConfig() {
-                const config = {
-                    pid: {
-                        kp: parseFloat(document.getElementById('pidKp').value),
-                        ki: parseFloat(document.getElementById('pidKi').value),
-                        kd: parseFloat(document.getElementById('pidKd').value),
-                        target_angle: parseFloat(document.getElementById('pidTargetAngle').value),
-                        output_min: parseFloat(document.getElementById('pidOutputMin').value),
-                        output_max: parseFloat(document.getElementById('pidOutputMax').value),
-                        iterm_min: parseFloat(document.getElementById('pidItermMin').value),
-                        iterm_max: parseFloat(document.getElementById('pidItermMax').value)
-                    },
-                    mpu6050: {
-                        calibration_samples: parseInt(document.getElementById('mpu6050CalibrationSamples').value)
-                    },
-                    main_loop: {
-                        interval_ms: parseInt(document.getElementById('mainLoopIntervalMs').value)
-                    }
-                };
-
-                fetch('/api/config', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(config),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    alert('Configuration saved successfully');
-                    configMenu.style.display = 'none';
-                })
-                .catch((error) => {
-                    console.error('Error saving configuration:', error);
-                    alert('Error saving configuration');
-                });
             }
 
             function drawRobot() {
@@ -264,37 +226,59 @@
                 ctx.restore();
             }
 
-            function updateData() {
-                fetch('/data', {
-                    method: 'GET',
-                    cache: 'no-cache',
+            function saveConfig() {
+                const config = {
+                    kp: parseFloat(document.getElementById('pidKp').value),
+                    ki: parseFloat(document.getElementById('pidKi').value),
+                    kd: parseFloat(document.getElementById('pidKd').value),
+                    targetAngle: parseFloat(document.getElementById('pidTargetAngle').value),
+                    outputMin: parseFloat(document.getElementById('pidOutputMin').value),
+                    outputMax: parseFloat(document.getElementById('pidOutputMax').value),
+                    itermMin: parseFloat(document.getElementById('pidItermMin').value),
+                    itermMax: parseFloat(document.getElementById('pidItermMax').value),
+                    calibrationSamples: parseInt(document.getElementById('mpu6050CalibrationSamples').value),
+                    mainLoopInterval: parseInt(document.getElementById('mainLoopIntervalMs').value)
+                };
+
+                fetch('/config', {
+                    method: 'POST',
                     headers: {
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
-                    }
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(config),
                 })
-                .then(response => response.text())
+                .then(response => response.json())
                 .then(data => {
-                    const [newAngle, newOutput] = data.split(',').map(parseFloat);
-                    angle = newAngle;
-                    motorOutput = newOutput;
-                    document.getElementById('currentAngle').textContent = angle.toFixed(2);
-                    document.getElementById('motorOutput').textContent = motorOutput.toFixed(2);
-                    
-                    // Update wheel rotation
-                    wheelRotation += (motorOutput / 100) * (100 / 60) * (2 * Math.PI / 60);
-                    wheelRotation %= (2 * Math.PI);  // Keep it within 0 to 2π
-                    
-                    drawRobot();
+                    alert('Configuration saved successfully');
+                    configMenu.style.display = 'none';
                 })
-                .catch(error => console.error('Error fetching data:', error));
+                .catch((error) => {
+                    console.error('Error saving configuration:', error);
+                    alert('Error saving configuration');
+                });
             }
 
-            // Update data every 16ms (approximately 60fps)
-            setInterval(updateData, 16);
+            function updateTelemetry() {
+                fetch('/telemetry')
+                    .then(response => response.json())
+                    .then(data => {
+                        angle = data.pitch;
+                        motorOutput = data.pidOutput;
+                        document.getElementById('currentAngle').textContent = angle.toFixed(2);
+                        document.getElementById('motorOutput').textContent = motorOutput.toFixed(2);
+                        
+                        // Update wheel rotation
+                        wheelRotation += (motorOutput / 100) * (100 / 60) * (2 * Math.PI / 60);
+                        wheelRotation %= (2 * Math.PI);  // Keep it within 0 to 2π
+                        
+                        drawRobot();
+                    })
+                    .catch(error => console.error('Error fetching telemetry:', error));
+            }
 
-            // Initial update
-            updateData();
+            // Update telemetry every 100ms
+            setInterval(updateTelemetry, 100);
+            drawRobot();
         });
     </script>
 </body>

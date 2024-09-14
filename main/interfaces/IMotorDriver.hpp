@@ -1,7 +1,7 @@
 #pragma once
-#include "interfaces/IConfigObserver.hpp"
+#include "interfaces/IComponent.hpp"
 
-class IMotorDriver : public IConfigObserver {
+class IMotorDriver : public IComponent {
     public:
         virtual esp_err_t setSpeed(float speed) const = 0;
         virtual ~IMotorDriver() = default;

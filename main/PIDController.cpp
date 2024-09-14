@@ -2,90 +2,67 @@
 #include "include/RuntimeConfig.hpp"
 #include <algorithm>
 
-esp_err_t PIDController::setParams(const IRuntimeConfig& config) {
-    ESP_LOGI(TAG, "Setting PID parameters");
-    setKp(config.getPidKp());
-    setKi(config.getPidKi());
-    setKd(config.getPidKd());
-    setSetpoint(config.getPidTargetAngle());
-    setOutputLimits(config.getPidOutputMin(), config.getPidOutputMax());
-    setItermLimits(config.getPidItermMin(), config.getPidItermMax());   
-    ESP_LOGD(TAG, "PID parameters set - Kp: %.2f, Ki: %.2f, Kd: %.2f, Setpoint: %.2f", 
-                  m_kp, m_ki, m_kd, m_setpoint);
-    return ESP_OK;
+PIDController::PIDController() {
+    m_mutex = xSemaphoreCreateMutex();
 }
 
-esp_err_t PIDController::init(const IRuntimeConfig& config) {
-    ESP_LOGI(TAG, "Initializing PID Controller");
-    esp_err_t ret = setParams(config);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to set initial PID parameters");
-        return ret;
+PIDController::~PIDController() {
+    if (m_mutex) {
+        vSemaphoreDelete(m_mutex);
     }
-    ESP_LOGI(TAG, "PID Controller initialized successfully");
+}
+
+esp_err_t PIDController::setConfig(const PIDConfig& p_config) {
+    ESP_LOGI(TAG, "Setting PID parameters");
+    m_config = p_config;
+    ESP_LOGD(TAG, "PID parameters set - Kp: %.2f, Ki: %.2f, Kd: %.2f, Setpoint: %.2f, ITermMin: %.2f, ITermMax: %.2f, OutputMin: %.2f, OutputMax: %.2f", 
+                  m_config.kp, m_config.ki, m_config.kd, m_config.targetAngle, m_config.itermMin, m_config.itermMax, m_config.outputMin, m_config.outputMax);
     return ESP_OK;
 }
 
-float PIDController::compute(float& integral, float& lastError, float currentValue, float dt) const {
-    float currentError = m_setpoint - currentValue;
-    
-    // Proportional term
-    float pTerm = m_kp * currentError;
-    
-    // Integral term 
-    integral += currentError * dt;
-    integral = std::max(m_iTermMin, std::min(integral, m_iTermMax));
-    float iTerm = m_ki * integral;
-    
-    // Derivative term
-    float dTerm = m_kd * (currentError - lastError) / dt;
-    lastError = currentError;
-    
-    // Calculate total output
-    float output = pTerm + iTerm + dTerm;
-    
-    // Limit output value
-    output = std::max(m_outputMin, std::min(output, m_outputMax));
-    
-    ESP_LOGV(TAG, "PID Computation - Error: %.2f, P: %.2f, I: %.2f, D: %.2f, Output: %.2f", 
-                    currentError, pTerm, iTerm, dTerm, output);
-    
-    return output;
+esp_err_t PIDController::init(const IRuntimeConfig& p_config) {
+    ESP_LOGI(TAG, "Initializing PID Controller");
+    if (xSemaphoreTake(m_mutex, portMAX_DELAY) == pdTRUE) {
+        setConfig(p_config.getPidConfig());
+        xSemaphoreGive(m_mutex);
+        ESP_LOGI(TAG, "PID Controller initialized successfully");
+        return ESP_OK;
+    }
+    ESP_LOGE(TAG, "Failed to acquire mutex in init");
+    return ESP_FAIL;
 }
 
-esp_err_t PIDController::onConfigUpdate(const IRuntimeConfig& config) {
-    ESP_LOGI(TAG, "Updating PID Controller configuration");
-    return setParams(config);
+float PIDController::compute(float& p_integral, float& p_lastError, float p_currentValue, float p_dt) const {
+    if (xSemaphoreTake(m_mutex, portMAX_DELAY) == pdTRUE) {
+        float l_currentError = m_config.targetAngle - p_currentValue;
+        
+        // Proportional term
+        float l_pTerm = m_config.kp * l_currentError;
+        
+        // Integral term 
+        p_integral += l_currentError * p_dt;
+        p_integral = applyLimits(p_integral, m_config.itermMin, m_config.itermMax);
+        float l_iTerm = m_config.ki * p_integral;
+        
+        // Derivative term
+        float dTerm = m_config.kd * (l_currentError - p_lastError) / p_dt;
+        p_lastError = l_currentError;
+        
+        // Calculate total output
+        float l_output = l_pTerm + l_iTerm + dTerm;
+        
+        // Limit output value
+        l_output = std::max(m_config.outputMin, std::min(l_output, m_config.outputMax));
+        
+        ESP_LOGV(TAG, "PID Computation - Error: %.2f, P: %.2f, I: %.2f, D: %.2f, Output: %.2f", 
+                        l_currentError, l_pTerm, l_iTerm, dTerm, l_output);
+        xSemaphoreGive(m_mutex);
+        return l_output;
+    }
+    ESP_LOGW(TAG, "Failed to acquire mutex in compute");
+    return 0.0f;  // Return 0 if mutex couldn't be obtained    
 }
 
-void PIDController::setSetpoint(float setpoint) {
-    m_setpoint = setpoint;
-    ESP_LOGD(TAG, "PID setpoint updated to %.2f", setpoint);
-}
-
-void PIDController::setKp(float kp) {
-    m_kp = kp;
-    ESP_LOGD(TAG, "PID Kp updated to %.2f", kp);
-}
-
-void PIDController::setKi(float ki) {
-    m_ki = ki;
-    ESP_LOGD(TAG, "PID Ki updated to %.2f", ki);
-}
-
-void PIDController::setKd(float kd) {
-    m_kd = kd;
-    ESP_LOGD(TAG, "PID Kd updated to %.2f", kd);
-}
-
-void PIDController::setOutputLimits(float min, float max) {
-    m_outputMin = min;
-    m_outputMax = max;
-    ESP_LOGD(TAG, "PID output limits updated to [%.2f, %.2f]", min, max);
-}
-
-void PIDController::setItermLimits(float min, float max) {
-    m_iTermMin = min;
-    m_iTermMax = max;
-    ESP_LOGD(TAG, "PID integral term limits updated to [%.2f, %.2f]", min, max);
+float PIDController::applyLimits(float p_value, float p_min, float p_max) const {
+    return std::max(p_min, std::min(p_value, p_max));
 }

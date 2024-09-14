@@ -1,43 +1,54 @@
 #pragma once
 
+#include "interfaces/IComponentHandler.hpp"
 #include "esp_err.h"
 #include "esp_log.h"
 #include <vector>
 #include <memory>
 
-class IConfigObserver;
-class IMotorDriver;
-class IWebServer;
-class IPIDController;
-class IMPU6050Manager;
-class IWiFiManager;
 class IRuntimeConfig;
+class IConfigObserver;
 
-class ComponentHandler {
+class ComponentHandler : public IComponentHandler {
 public:
-    ComponentHandler(IRuntimeConfig& config) : runtimeConfig(config) {}
-    esp_err_t init();
-    void notifyConfigUpdate();
+    ComponentHandler();
 
-    const IWiFiManager& getWifiManager() { return *wifiManager; }
-    IWebServer& getWebServer() { return *webServer; }
-    const IMotorDriver& getMotorDriver() {return *motorDriver; }
-    const IPIDController& getPIDController() { return *pidController; }
-    const IMPU6050Manager& getMPU6050Manager() { return *mpu6050Manager; }
+    esp_err_t init(const IRuntimeConfig&) override;
 
+    IWiFiManager& getWifiManager() override { return *m_wifiManager; }
+    IWebServer& getWebServer() override { return *m_webServer; }
+    IMotorDriver& getMotorDriver() override {return *m_motorDriver; }
+    IPIDController& getPIDController() override { return *m_pidController; }
+    IMPU6050Manager& getMPU6050Manager() override { return *m_mpu6050Manager; }
+
+    IStateMachine& getStateMachine() { return *m_stateMachine; }
+    ISensorTask& getSensorTask() { return *m_sensorTask; }
+    IPIDTask& getPIDTask() { return *m_pidTask; }
+    IMotorControlTask& getMotorControlTask() { return *m_motorControlTask; }
+    ITelemetryTask& getTelemetryTask() { return *m_telemetryTask; }
+    IConfigurationTask& getConfigurationTask() { return *m_configurationTask; }
+    
 private:
     static constexpr const char* TAG = "Component Handler";
 
-    void registerObserver(std::shared_ptr<IConfigObserver>);
-    void unregisterObserver(std::shared_ptr<IConfigObserver>);
+    IRuntimeConfig& m_runtimeConfig;
 
-    IRuntimeConfig& runtimeConfig;
+    std::unique_ptr<IWiFiManager> m_wifiManager;
+    std::unique_ptr<IWebServer> m_webServer;
+    std::unique_ptr<IMotorDriver> m_motorDriver;
+    std::unique_ptr<IPIDController> m_pidController;
+    std::unique_ptr<IMPU6050Manager> m_mpu6050Manager;
 
-    std::shared_ptr<IWiFiManager> wifiManager;
-    std::shared_ptr<IWebServer> webServer;
-    std::shared_ptr<IMotorDriver> motorDriver;
-    std::shared_ptr<IPIDController> pidController;
-    std::shared_ptr<IMPU6050Manager> mpu6050Manager;
+    std::unique_ptr<IStateMachine> m_stateMachine;
+    std::unique_ptr<ISensorTask> m_sensorTask;
+    std::unique_ptr<IPIDTask> m_pidTask;
+    std::unique_ptr<IMotorControlTask> m_motorControlTask;
+    std::unique_ptr<ITelemetryTask> m_telemetryTask;
+    std::unique_ptr<IConfigurationTask> m_configurationTask;
 
-    std::vector<std::shared_ptr<IConfigObserver>> observers;
+    QueueHandle_t m_sensorDataQueue;
+    QueueHandle_t m_pidOutputQueue;
+    QueueHandle_t m_motorControlQueue;
+    QueueHandle_t m_telemetryQueue;
+    QueueHandle_t m_configQueue;
 };

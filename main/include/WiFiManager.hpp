@@ -1,6 +1,6 @@
 #pragma once
 
-#include "interfaces/IConfigObserver.hpp"
+#include "interfaces/IComponent.hpp"
 
 #include "esp_log.h"
 #include "esp_wifi.h"
@@ -8,7 +8,7 @@
 #include "freertos/event_groups.h"
 #include "nvs_flash.h"
 
-class IWiFiManager : public IConfigObserver {
+class IWiFiManager : public IComponent {
     public:
         virtual ~IWiFiManager() = default;
 };
@@ -16,7 +16,6 @@ class IWiFiManager : public IConfigObserver {
 class WiFiManager : public IWiFiManager{
 public:
     esp_err_t init(const IRuntimeConfig&) override;
-    esp_err_t onConfigUpdate(const IRuntimeConfig&) override;
 
 private:
     static constexpr const char* TAG = "WiFiManager";

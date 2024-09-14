@@ -1,8 +1,12 @@
 #pragma once
-#include "interfaces/IConfigObserver.hpp"
+#include "interfaces/IComponent.hpp"
+#include "interfaces/ITask.hpp"
 
-class IWebServer : public IConfigObserver {
+class IWebServer : public IComponent{
     public:
-        virtual void update_telemetry(float, float) = 0;
-        virtual ~IWebServer() = default;
+    virtual void update_telemetry(const TelemetryData&) = 0;
+    virtual bool hasConfigurationRequest() = 0;
+    virtual PIDConfig getConfigurationRequest() = 0;
+    virtual void notifyConfigurationUpdated() = 0;
+    virtual ~IWebServer() = default;
 };
