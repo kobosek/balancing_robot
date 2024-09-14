@@ -93,7 +93,7 @@ esp_err_t L298N::setSpeed(float p_speed) const {
     esp_err_t l_ret = ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0, l_duty);
     if (l_ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to set duty for LEDC channel 0");
-        return ret;
+        return l_ret;
     }
     l_ret = ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_1, l_duty);
     if (l_ret != ESP_OK) {
@@ -192,7 +192,7 @@ esp_err_t MX1616H::setSpeed(float p_speed) const {
 
     uint32_t l_duty = static_cast<uint32_t>(std::abs(p_speed) * MAX_DUTY);
 
-    if (speed > 0) {
+    if (p_speed > 0) {
         ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0, l_duty);
         ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_1, 0);
         ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_2, l_duty);

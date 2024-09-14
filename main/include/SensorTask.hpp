@@ -9,6 +9,7 @@ class IStateMachine;
 class SensorTask : public ISensorTask {
     public:
         SensorTask(IMPU6050Manager&, QueueHandle_t, IStateMachine&);
+        ~SensorTask();
         
         esp_err_t init(const IRuntimeConfig&) override;
         QueueHandle_t getSensorDataQueue() const override;

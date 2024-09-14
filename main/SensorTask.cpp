@@ -1,5 +1,6 @@
-#include "include/SensorTask.hpp"
 #include "interfaces/IMPU6050Manager.hpp"
+
+#include "include/SensorTask.hpp"
 #include "include/StateMachine.hpp"
 
 SensorTask::SensorTask(IMPU6050Manager& p_mpu, QueueHandle_t p_dataQueue, IStateMachine& p_sm)
@@ -33,14 +34,13 @@ void SensorTask::taskFunction(void* p_pvParameters) {
 
 void SensorTask::run() {
     TickType_t lastWakeTime = xTaskGetTickCount();
-    
+    SensorData l_sensorData {0.0f, 0.0f, 0.0f, esp_timer_get_time() }; 
+
     while (true) {
-        SensorData l_sensorData;
-        
         // Get processed sensor data directly from MPU6050Manager
-        l_sensorData.pitch = m_mpu6050.calculatePitch();
-        l_sensorData.roll = m_mpu6050.calculateRoll();
-        l_sensorData.yaw = m_mpu6050.calculateYaw();
+        l_sensorData.pitch = m_mpu6050.calculatePitch(l_sensorData.pitch);
+        l_sensorData.roll = m_mpu6050.calculateRoll(l_sensorData.roll);
+        l_sensorData.yaw = m_mpu6050.calculateYaw(l_sensorData.yaw);
         l_sensorData.timestamp = esp_timer_get_time();
         
         // Send data to queue

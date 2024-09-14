@@ -4,8 +4,7 @@
 #include <sstream>
 #include "cJSON.h"
 
-WebServer::WebServer()
-    : m_server(nullptr), m_configRequestQueue(nullptr), m_telemetryMutex(nullptr), m_configUpdated(false) {
+WebServer::WebServer() {
     m_configRequestQueue = xQueueCreate(CONFIG_QUEUE_SIZE, sizeof(PIDConfig));
     m_telemetryMutex = xSemaphoreCreateMutex();
 }

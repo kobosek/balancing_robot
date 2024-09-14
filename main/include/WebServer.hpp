@@ -6,6 +6,9 @@ class IComponentHandler;
 
 class WebServer : public IWebServer {
     public:
+        WebServer();
+        ~WebServer();
+        
         esp_err_t init(const IRuntimeConfig&) override;
         void update_telemetry(const TelemetryData& telemetry) override;
         bool hasConfigurationRequest() override;

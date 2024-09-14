@@ -76,9 +76,9 @@ void ConfigurationTask::applyConfigUpdate(const PIDConfig& update) {
 }
 
 void ConfigurationTask::broadcastConfig() {
-    PIDConfig currentConfig = m_runtimeConfig.getPidConfig();
+    PIDConfig l_currentConfig = m_runtimeConfig.getPidConfig();
 
-    if (xQueueOverwrite(configUpdateQueue, &currentConfig) != pdTRUE) {
+    if (xQueueOverwrite(m_configUpdateQueue, &l_currentConfig) != pdTRUE) {
         ESP_LOGW(TAG, "Failed to broadcast configuration update");
     }
 }

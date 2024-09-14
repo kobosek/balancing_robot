@@ -7,8 +7,7 @@ class IStateMachine;
 
 class PIDTask : public IPIDTask {
 public:
-    PIDTask(const IPIDController&, QueueHandle_t, QueueHandle_t, 
-            QueueHandle_t, const IStateMachine&);
+    PIDTask(IPIDController&, QueueHandle_t, QueueHandle_t, QueueHandle_t, IStateMachine&);
     ~PIDTask();
 
     esp_err_t init(const IRuntimeConfig&) override;
@@ -25,6 +24,7 @@ private:
     QueueHandle_t m_pidOutputQueue;
     QueueHandle_t m_configQueue;
     IStateMachine& m_stateMachine;
+    
     TaskHandle_t m_taskHandle;
 
     float m_integral;

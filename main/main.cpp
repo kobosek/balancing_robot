@@ -14,7 +14,7 @@ extern "C" void app_main(void)
 
     // Initialize ComponentHandler
     ComponentHandler handler;
-    handler.init();
+    handler.init(config);
 
     ESP_LOGI("main", "All tasks and components initialized");
 

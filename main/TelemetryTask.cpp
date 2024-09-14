@@ -49,7 +49,7 @@ void TelemetryTask::collectAndSendTelemetry() {
         ESP_LOGW(TAG, "Failed to read sensor data");
     }
 
-    if (xQueuePeekm_(m_pidOutputQueue, &telemetryData.pidOutput, 0) != pdTRUE) {
+    if (xQueuePeek(m_pidOutputQueue, &telemetryData.pidOutput, 0) != pdTRUE) {
         ESP_LOGW(TAG, "Failed to read PID output");
     }
 
@@ -60,5 +60,5 @@ void TelemetryTask::collectAndSendTelemetry() {
     m_webServer.update_telemetry(telemetryData);
 
     ESP_LOGD(TAG, "Telemetry sent - Pitch: %.2f, PID Output: %.2f, Motor Speed: %.2f",
-             sensorData.pitch, pidOutput.output, motorSpeed);
+             telemetryData.sensorData.pitch, telemetryData.pidOutput.output, telemetryData.motorSpeed);
 }

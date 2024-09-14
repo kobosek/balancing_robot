@@ -6,6 +6,9 @@
 
 class RuntimeConfig : public IRuntimeConfig{
 public:
+    RuntimeConfig();
+    ~RuntimeConfig();
+
     esp_err_t init(const std::string& p_filename = "/spiffs/config.json") override;
     esp_err_t save(const std::string& p_filename = "/spiffs/config.json") const override;
 

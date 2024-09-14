@@ -7,7 +7,8 @@
 class PIDController : public IPIDController {
 public:
     PIDController();
-
+    ~PIDController();
+    
     esp_err_t init(const IRuntimeConfig&) override;
     esp_err_t setConfig(const PIDConfig&) override;
 

@@ -7,7 +7,6 @@
 class MPU6050Manager : public IMPU6050Manager {
     public:
         esp_err_t init(const IRuntimeConfig&) override;
-        esp_err_t onConfigUpdate(const IRuntimeConfig&) override;
         float calculatePitch(float&) const override; 
         float calculateRoll(float&) const override; 
         float calculateYaw(float&) const override;         

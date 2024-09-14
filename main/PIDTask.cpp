@@ -17,7 +17,7 @@ PIDTask::~PIDTask() {
 esp_err_t PIDTask::init(const IRuntimeConfig&) {
     BaseType_t result = xTaskCreate(
         taskFunction,
-        "PIDTask",
+        TAG,
         STACK_SIZE,
         this,
         PRIORITY,

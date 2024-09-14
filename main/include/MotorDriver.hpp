@@ -8,7 +8,6 @@
 class L298N : public IMotorDriver {
 public:
     esp_err_t init(const IRuntimeConfig&) override;
-    esp_err_t onConfigUpdate(const IRuntimeConfig&) override;
     esp_err_t setSpeed(float) const override;
 
 private:
@@ -31,7 +30,6 @@ private:
 class MX1616H : public IMotorDriver {
 public:
     esp_err_t init(const IRuntimeConfig&) override;
-    esp_err_t onConfigUpdate(const IRuntimeConfig&) override;
     esp_err_t setSpeed(float) const override;
 
 private:

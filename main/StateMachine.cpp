@@ -22,14 +22,15 @@ esp_err_t StateMachine::init(const IRuntimeConfig&) {
     eventGroup = xEventGroupCreate();
     if (eventGroup == nullptr) {
         ESP_LOGE(TAG, "Failed to create event group");
-        return;
+        return ESP_FAIL;
     }
 
     xTaskCreate(taskFunction, TAG, STACK_SIZE, this, PRIORITY, &taskHandle);
     if (taskHandle == nullptr) {
         ESP_LOGE(TAG, "Failed to create StateMachine task");
+        return ESP_FAIL;
     }
-    return ESP_OK
+    return ESP_OK;
 }
 
 esp_err_t StateMachine::setState(State newState) {

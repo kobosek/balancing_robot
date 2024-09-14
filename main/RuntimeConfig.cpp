@@ -170,7 +170,7 @@ esp_err_t RuntimeConfig::fromJson(const std::string& json) {
         if (wifi) {
             if ((item = cJSON_GetObjectItem(wifi, "ssid")) && cJSON_IsString(item)) {
                 m_wifiSSID = item->valuestring;
-                ESP_LOGI(TAG, "Loaded WiFi SSID: %s", wifi_ssid.c_str());
+                ESP_LOGI(TAG, "Loaded WiFi SSID: %s", m_wifiSSID.c_str());
             }
             if ((item = cJSON_GetObjectItem(wifi, "password")) && cJSON_IsString(item)) {
                 m_wifiPassword = item->valuestring;
@@ -224,7 +224,7 @@ PIDConfig RuntimeConfig::getPidConfig() const  {
     if (xSemaphoreTake(m_mutex, portMAX_DELAY) == pdTRUE) {
         PIDConfig config = m_pidConfig;
         xSemaphoreGive(m_mutex);
-        return m_pidConfig;
+        return config;
     }
     return PIDConfig(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f); 
 }

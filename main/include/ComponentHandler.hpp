@@ -1,13 +1,8 @@
 #pragma once
 
 #include "interfaces/IComponentHandler.hpp"
-#include "esp_err.h"
-#include "esp_log.h"
 #include <vector>
 #include <memory>
-
-class IRuntimeConfig;
-class IConfigObserver;
 
 class ComponentHandler : public IComponentHandler {
 public:
@@ -30,8 +25,6 @@ public:
     
 private:
     static constexpr const char* TAG = "Component Handler";
-
-    IRuntimeConfig& m_runtimeConfig;
 
     std::unique_ptr<IWiFiManager> m_wifiManager;
     std::unique_ptr<IWebServer> m_webServer;
