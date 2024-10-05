@@ -29,7 +29,7 @@ struct PIDOutput {
 
 struct TelemetryData {
     SensorData sensorData;
-    PIDOutput pidOutput;
+    float pidOutput;
     float motorSpeed;
 };
 

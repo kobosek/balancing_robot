@@ -13,7 +13,7 @@ class IMotorControlTask;
 class ITelemetryTask;
 class IConfigurationTask;
 
-class IComponentHandler : public IComponent {
+class IComponentHandler {
 public:
     virtual ~IComponentHandler() = default;
 

@@ -12,7 +12,7 @@ class SensorTask : public ISensorTask {
         ~SensorTask();
         
         esp_err_t init(const IRuntimeConfig&) override;
-        QueueHandle_t getSensorDataQueue() const override;
+        QueueHandle_t getSensorDataQueue() const override { return m_sensorDataQueue; };
 
     private:
         static constexpr const char* TAG = "SensorTask";

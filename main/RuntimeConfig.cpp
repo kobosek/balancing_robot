@@ -277,6 +277,7 @@ std::string RuntimeConfig::getWifiPassword() const {
     if (xSemaphoreTake(m_mutex, portMAX_DELAY) == pdTRUE) {
         std::string value = m_wifiPassword;
         xSemaphoreGive(m_mutex);
+        return value;
     }
     return std::string();
 }

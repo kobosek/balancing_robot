@@ -3,42 +3,22 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#define I2C_MASTER_NUM I2C_NUM_0
-#define MPU6050_ADDR 0x68
+constexpr gpio_num_t I2C_MASTER_SDA_IO = GPIO_NUM_21;
+constexpr gpio_num_t I2C_MASTER_SCL_IO = GPIO_NUM_22;
 
-const gpio_num_t I2C_MASTER_SDA_IO = GPIO_NUM_21;
-const gpio_num_t I2C_MASTER_SCL_IO = GPIO_NUM_22;
+MPU6050Manager::MPU6050Manager()  {
+    II2CBus I2CBus(SDA, SCL);
+    II2CDevice I2CDevice;
+    I2CDevice.init(I2CBus);
+    _sensor = std::make_unique<MPU6050>(I2CDevice);
+}
 
 esp_err_t MPU6050Manager::init(const IRuntimeConfig& config) {
     ESP_LOGI(TAG, "Initializing MPU6050Manager");
 
-    esp_err_t ret = _sensor.init(I2C_MASTER_NUM, I2C_MASTER_SDA_IO, I2C_MASTER_SCL_IO, MPU6050_ADDR, I2C_MASTER_FREQ_HZ);
+    esp_err_t ret = _sensor.init(MPU6050Config());
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to initialize MPU6050: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
-    ret = _sensor.setAccelRange(MPU6050AccelConfig::RANGE_4G);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to set accelerometer range: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
-    ret = _sensor.setGyroRange(MPU6050GyroConfig::RANGE_500_DEG);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to set gyroscope range: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
-    ret = _sensor.setDLPFConfig(MPU6050DLPFConfig::DLPF_BW_44HZ_ACC_42HZ_GYRO);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to set DLPF config: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
-    ret = _sensor.setSampleRate(MPU6050SampleRateDiv::RATE_1KHZ);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to set sample rate: %s", esp_err_to_name(ret));
         return ret;
     }
 

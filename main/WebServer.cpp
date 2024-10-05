@@ -88,7 +88,7 @@ void WebServer::notifyConfigurationUpdated() {
 }
 
 esp_err_t WebServer::indexHandler(httpd_req_t *req) {
-    httpd_resp_send_type(req, "text/html");
+    httpd_resp_set_type(req, "text/html");
     httpd_resp_sendstr(req, "<!DOCTYPE html><html><body><h1>Balancing Robot Control</h1></body></html>");
     return ESP_OK;
 }
@@ -107,7 +107,7 @@ esp_err_t WebServer::telemetryHandler(httpd_req_t *req) {
     cJSON_AddNumberToObject(root, "pitch", telemetry.sensorData.pitch);
     cJSON_AddNumberToObject(root, "roll", telemetry.sensorData.roll);
     cJSON_AddNumberToObject(root, "yaw", telemetry.sensorData.yaw);
-    cJSON_AddNumberToObject(root, "pidOutput", telemetry.pidOutput.output);
+    cJSON_AddNumberToObject(root, "pidOutput", telemetry.pidOutput);
     cJSON_AddNumberToObject(root, "motorSpeed", telemetry.motorSpeed);
 
     char *json_str = cJSON_Print(root);

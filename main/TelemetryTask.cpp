@@ -60,5 +60,5 @@ void TelemetryTask::collectAndSendTelemetry() {
     m_webServer.update_telemetry(telemetryData);
 
     ESP_LOGD(TAG, "Telemetry sent - Pitch: %.2f, PID Output: %.2f, Motor Speed: %.2f",
-             telemetryData.sensorData.pitch, telemetryData.pidOutput.output, telemetryData.motorSpeed);
+             telemetryData.sensorData.pitch, telemetryData.pidOutput, telemetryData.motorSpeed);
 }

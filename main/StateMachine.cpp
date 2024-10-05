@@ -1,5 +1,3 @@
-#pragma once
-
 #include "include/StateMachine.hpp"
 #include "esp_log.h"
 
@@ -141,7 +139,7 @@ void StateMachine::checkConfigUpdate() {
     if (xQueueReceive(configQueue, &update, 0) == pdTRUE) {
         targetAngle = update.targetAngle;
         // Forward the PID parameters to the PID task
-        xQueueSend(pidOutputQueue, &update, 0);
+        xQueueSend(configQueue, &update, 0);
         xEventGroupSetBits(eventGroup, CONFIG_UPDATE_BIT);
         ESP_LOGI(TAG, "Configuration updated. New target angle: %.2f", targetAngle);
     }
@@ -149,8 +147,24 @@ void StateMachine::checkConfigUpdate() {
 
 void StateMachine::updateTelemetry() {
     TelemetryData telemetryData;
-    xQueuePeek(sensorDataQueue, &telemetryData.sensorData, 0);
-    xQueuePeek(pidOutputQueue, &telemetryData.pidOutput, 0);
-    xQueuePeek(motorControlQueue, &telemetryData.motorSpeed, 0);
-    xQueueOverwrite(telemetryQueue, &telemetryData);
+
+    // Safely peek at the sensor data
+    if (xQueuePeek(sensorDataQueue, &telemetryData.sensorData, 0) != pdTRUE) {
+        ESP_LOGW(TAG, "Failed to peek sensor data");
+    }
+
+    // Safely peek at the PID output
+    if (xQueuePeek(pidOutputQueue, &telemetryData.pidOutput, 0) != pdTRUE) {
+        ESP_LOGW(TAG, "Failed to peek PID output");
+    }
+
+    // Safely peek at the motor speed
+    if (xQueuePeek(motorControlQueue, &telemetryData.motorSpeed, 0) != pdTRUE) {
+        ESP_LOGW(TAG, "Failed to peek motor speed");
+    }
+
+    // Try to send the telemetry data, but don't block if the queue is full
+    if (xQueueSend(telemetryQueue, &telemetryData, 0) != pdTRUE) {
+        ESP_LOGW(TAG, "Failed to send telemetry data - queue might be full");
+    }
 }

@@ -52,8 +52,16 @@ float PIDController::compute(float& p_integral, float& p_lastError, float p_curr
         float l_output = l_pTerm + l_iTerm + dTerm;
         
         // Limit output value
-        l_output = std::max(m_config.outputMin, std::min(l_output, m_config.outputMax));
-        
+        l_output = std::max(-1.0f, std::min(l_output, 1.0f));
+
+        if (l_output > 0) {
+            l_output = m_config.outputMin + (l_output) * (m_config.outputMax-m_config.outputMin);
+        } else if (l_output < 0) {
+            l_output = -m_config.outputMin + (l_output) * (m_config.outputMax-m_config.outputMin);
+        } else {
+            l_output = 0;
+        }   
+
         ESP_LOGV(TAG, "PID Computation - Error: %.2f, P: %.2f, I: %.2f, D: %.2f, Output: %.2f", 
                         l_currentError, l_pTerm, l_iTerm, dTerm, l_output);
         xSemaphoreGive(m_mutex);

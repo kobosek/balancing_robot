@@ -1,6 +1,18 @@
 #pragma once
 
 #include "interfaces/IComponentHandler.hpp"
+#include "include/WebServer.hpp"
+#include "include/WifiManager.hpp"
+#include "include/PIDController.hpp"
+#include "include/MotorDriver.hpp"
+#include "include/MPU6050Manager.hpp"
+#include "include/StateMachine.hpp"
+#include "include/SensorTask.hpp"
+#include "include/PIDTask.hpp"
+#include "include/MotorControlTask.hpp"
+#include "include/TelemetryTask.hpp"
+#include "include/ConfigurationTask.hpp"
+
 #include <vector>
 #include <memory>
 
@@ -8,7 +20,7 @@ class ComponentHandler : public IComponentHandler {
 public:
     ComponentHandler();
 
-    esp_err_t init(const IRuntimeConfig&) override;
+    esp_err_t init(IRuntimeConfig&);
 
     IWiFiManager& getWifiManager() override { return *m_wifiManager; }
     IWebServer& getWebServer() override { return *m_webServer; }

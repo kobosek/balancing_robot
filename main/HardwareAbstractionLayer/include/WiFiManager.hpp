@@ -1,14 +1,12 @@
 #pragma once
 
-#include "interfaces/IComponent.hpp"
-
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "freertos/event_groups.h"
 #include "nvs_flash.h"
 
-class IWiFiManager : public IComponent {
+class IWiFiManager {
     public:
         virtual ~IWiFiManager() = default;
 };

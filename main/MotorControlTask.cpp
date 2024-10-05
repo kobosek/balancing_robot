@@ -70,5 +70,5 @@ bool MotorControlTask::isSafeToOperate() {
     // - Time spent at extreme angles
     // - Battery voltage
     // - Motor temperature (if you have sensors for this)
-    return std::abs(currentSpeed) < MAX_SAFE_ANGLE;
+    return true;
 }

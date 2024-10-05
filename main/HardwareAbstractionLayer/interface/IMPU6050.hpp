@@ -1,7 +1,8 @@
 #pragma once
 
-#include "driver/i2c_master.h"
-#include "esp_log.h"
+#include "interface/IAccelerometer.hpp"
+#include "interface/IGyroscope.hpp"
+#include "interface/ITempSensor.hpp"
 
 enum class MPU6050Register : uint8_t {
     PWR_MGMT_1 = 0x6B,
@@ -10,7 +11,12 @@ enum class MPU6050Register : uint8_t {
     GYRO_CONFIG = 0x1B,
     ACCEL_CONFIG = 0x1C,
     ACCEL_XOUT_H = 0x3B,
-    GYRO_XOUT_H = 0x43
+    ACCEL_YOUT_H = 0x3D,
+    ACCEL_ZOUT_H = 0x3F,
+    TEMP_OUT_H = 0x41,
+    GYRO_XOUT_H = 0x43,
+    GYRO_YOUT_H = 0x45,
+    GYRO_ZOUT_H = 0x47
 };
 
 enum class MPU6050PowerManagement : uint8_t {
@@ -48,30 +54,16 @@ enum class MPU6050SampleRateDiv : uint8_t {
     RATE_125HZ = 0x07, // 125 Hz sampling rate
 };
 
-class MPU6050 {
-public:
-    MPU6050();
-    esp_err_t init(const i2c_port_t, 
-                    const gpio_num_t, 
-                    const gpio_num_t,
-                    const uint16_t,
-                    const uint32_t);
+struct MPU6050Config {
+    MPU6050DLPFConfig dlpfConfig = MPU6050DLPFConfig::DLPF_BW_44HZ_ACC_42HZ_GYRO;
+    MPU6050SampleRateDiv sampleRate = MPU6050SampleRateDiv::RATE_1KHZ;
+    MPU6050AccelConfig accelRange = MPU6050AccelConfig::RANGE_2G;
+    MPU6050GyroConfig gyroRange = MPU6050GyroConfig::RANGE_250_DEG;
+};
 
-    esp_err_t getAcceleration(float& , float&, float&) const;
-    esp_err_t getRotation(float&, float&, float&) const;
-
-    esp_err_t setDLPFConfig(MPU6050DLPFConfig);
-    esp_err_t setSampleRate(MPU6050SampleRateDiv);
-    esp_err_t setAccelRange(MPU6050AccelConfig);
-    esp_err_t setGyroRange(MPU6050GyroConfig);
-
-private:
-    static constexpr const char* TAG = "MPU6050";
-
-    i2c_master_dev_handle_t _dev_handle;
-    float _accel_scale;
-    float _gyro_scale;
-
-    esp_err_t writeRegister(MPU6050Register, uint8_t);
-    esp_err_t readRegisters(MPU6050Register, uint8_t*, size_t) const;
+class IMPU6050 : public IAccelerometer, public IGyroscope, public ITempSensor {
+    public:
+        virtual ~IMPU6050() = default;
+        virtual esp_err_t init(const MPU6050Config&) = 0;
+        virtual esp_err_t updateConfig(const MPU6050Config&) = 0;
 };

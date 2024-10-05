@@ -46,9 +46,10 @@ void PIDTask::run() {
             if (xQueueReceive(m_sensorDataQueue, &sensorData, 0) == pdTRUE) {
                 float dt = CONTROL_PERIOD / 1000.0f;  // Convert to seconds
                 float output = m_pidController.compute(m_integral, m_lastError, sensorData.pitch, dt);
-                
-                PIDOutput pidOutput = { output };
-                xQueueOverwrite(m_pidOutputQueue, &pidOutput);
+            
+                if (xQueueSend(m_pidOutputQueue, &output, 0) != pdTRUE) {
+                    ESP_LOGW(TAG, "Failed to send PID output - queue might be full");
+                }
                 
                 ESP_LOGV(TAG, "PID Output: %.2f", output);
             }
