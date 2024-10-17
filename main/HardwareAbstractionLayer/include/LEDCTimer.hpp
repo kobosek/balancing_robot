@@ -3,11 +3,8 @@
 
 class LEDCTimer : public ILEDCTimer {
     public:
-        LEDCTimer(const LEDCTimerConfig&);
-        esp_err_t init() override;
+        esp_err_t init(const LEDCTimerConfig&) override;
         const LEDCTimerConfig& getConfig() const;
     private:
         static constexpr const char* TAG = "LEDCTimer";
-
-        LEDCTimerConfig m_config;
 };
