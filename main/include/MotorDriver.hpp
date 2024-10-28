@@ -28,8 +28,8 @@ class MX1616H : public IMotorDriver {
     private:
         static constexpr const char* TAG = "MX1616H";
         
-        static constexpr gpio_num_t IN1_PIN = GPIO_NUM_14;
-        static constexpr gpio_num_t IN2_PIN = GPIO_NUM_27;
-        static constexpr gpio_num_t IN3_PIN = GPIO_NUM_26;
-        static constexpr gpio_num_t IN4_PIN = GPIO_NUM_25;
+        static constexpr gpio_num_t IN1_PIN = GPIO_NUM_27;
+        static constexpr gpio_num_t IN2_PIN = GPIO_NUM_26;
+        static constexpr gpio_num_t IN3_PIN = GPIO_NUM_25;
+        static constexpr gpio_num_t IN4_PIN = GPIO_NUM_33;
     };

@@ -44,8 +44,12 @@ float PIDController::compute(float& integral, float& lastError, float currentVal
     // Calculate total output
     float output = pTerm + iTerm + dTerm;
     
-    // Limit output value
-    output = std::max(m_outputMin, std::min(output, m_outputMax));
+    if (output > 0) {
+        output = std::max(m_outputMin, std::min(output, m_outputMax));
+    }
+    else {
+        output = std::max(-m_outputMax, std::min(output, -m_outputMin));
+    }
     
     ESP_LOGV(TAG, "PID Computation - Error: %.2f, P: %.2f, I: %.2f, D: %.2f, Output: %.2f", 
                     currentError, pTerm, iTerm, dTerm, output);

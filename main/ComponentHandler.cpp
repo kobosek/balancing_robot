@@ -13,16 +13,11 @@ esp_err_t ComponentHandler::init() {
 
     wifiManager = std::make_shared<WiFiManager>();
     esp_err_t ret = wifiManager->init(runtimeConfig);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to initialize WiFiManager");
-        return ret;
-    }
-
     webServer = std::make_shared<WebServer>(*this, runtimeConfig);
-    ret = webServer->init(runtimeConfig);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to initialize WebServer");
-        return ret;
+    if (ret == ESP_OK) {
+        webServer->init(runtimeConfig);
+        registerObserver(wifiManager);
+        registerObserver(webServer);
     }
 
     motorDriver = std::make_shared<MX1616H>();
@@ -46,8 +41,6 @@ esp_err_t ComponentHandler::init() {
         return ret;
     }
 
-    registerObserver(wifiManager);
-    registerObserver(webServer);
     registerObserver(motorDriver);
     registerObserver(pidController);
     registerObserver(mpu6050Manager);

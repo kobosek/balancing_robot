@@ -16,7 +16,7 @@ esp_err_t MPU6050::init(const i2c_port_t i2c_port,
         .clk_source = I2C_CLK_SRC_DEFAULT,
         .glitch_ignore_cnt = 7,
         .flags = {
-            .enable_internal_pullup = true
+            .enable_internal_pullup = false
         }
     };
 

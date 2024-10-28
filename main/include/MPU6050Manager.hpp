@@ -16,7 +16,7 @@ class MPU6050Manager : public IMPU6050Manager {
         esp_err_t calibrateGyro();    
         MPU6050 _sensor;
         static constexpr float ALPHA = 0.98f;
-        static constexpr int CALIBRATION_SAMPLES = 1000;
+        static constexpr int CALIBRATION_SAMPLES = 100;
         static constexpr uint32_t I2C_MASTER_FREQ_HZ = 400000;
         float _gyro_error = 0.0f;
 };

@@ -15,36 +15,44 @@
 
 #define LOOP_INTERVAL_MS 10
 
+#define TAG "PID_DEBUG"
+
+void pidControlTask(void* pvParameters);
+
 extern "C" void app_main(void)
+{
+    esp_log_level_set("*", ESP_LOG_INFO);
+    ESP_LOGI(TAG, "Starting Simplified PID Control Debug");
+    // Create and start the PID control task
+    xTaskCreatePinnedToCore(pidControlTask, "PID_Control_Task", 4096, NULL, 5, NULL, 1);
+}
+
+void pidControlTask(void* pvParameters)
 {
     RuntimeConfig config;
     config.init("/spiffs/config.json");
-
     ComponentHandler handler(config);
     handler.init();
+   
+    float integral = 0.0f, lastError = 0.0f, pitch = 0.0f;
+    const TickType_t xFrequency = pdMS_TO_TICKS(10);  // 10ms loop time
+    TickType_t xLastWakeTime = xTaskGetTickCount();
 
-    int64_t last_run = esp_timer_get_time();
-    
-    float integral, lastError = 0;
-    float pitch = 0;
-
-    while (1) {
-        int64_t now = esp_timer_get_time();
-        float dt = (now - last_run) / 1000000.0f;  // Convert to seconds
-
+    while (true) {
         pitch = handler.getMPU6050Manager().calculatePitch(pitch);
-        float output = handler.getPIDController().compute(integral, lastError, pitch, dt);
-
+        float output = handler.getPIDController().compute(integral, lastError, pitch, 0.01f);
         handler.getMotorDriver().setSpeed(output);
-
+        
         // Update global variables for web interface
         handler.getWebServer().update_telemetry(pitch, output);
 
-        // Delay to maintain consistent loop time
-        int64_t time_since_last_run = now - last_run;
-        if (time_since_last_run < LOOP_INTERVAL_MS * 1000) {
-            vTaskDelay((LOOP_INTERVAL_MS * 1000 - time_since_last_run) / 1000 / portTICK_PERIOD_MS);
+        // Log data periodically (e.g., every 100 iterations)
+        static int logCounter = 0;
+        if (++logCounter >= 100) {
+            ESP_LOGI(TAG, "Pitch: %.2f, Output: %.2f", pitch, output);
+            logCounter = 0;
         }
-        last_run = esp_timer_get_time();
+
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 }
