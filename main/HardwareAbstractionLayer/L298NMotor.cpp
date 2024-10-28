@@ -26,10 +26,10 @@ esp_err_t L298NMotor::init() {
 }
 
 esp_err_t L298NMotor::setClockwise() const {
-    esp_err_t l_ret = m_in1->setHigh();
+    esp_err_t l_ret = m_in2->setLow();
     if (l_ret != ESP_OK) return l_ret;
     
-    l_ret = m_in2->setLow();
+    l_ret = m_in1->setHigh();
     if (l_ret != ESP_OK) return l_ret;
 
     return ESP_OK;
@@ -45,8 +45,8 @@ esp_err_t L298NMotor::setCounterClockwise() const {
     return ESP_OK;
 }
 
-esp_err_t L298NMotor::setDirection(float p_duty) const {
-    if (p_duty < 0) {
+esp_err_t L298NMotor::setDirection(float p_speed) const {
+    if (p_speed < 0) {
         return setClockwise();
     } else {
         return setCounterClockwise();
@@ -56,15 +56,17 @@ esp_err_t L298NMotor::setDirection(float p_duty) const {
 esp_err_t L298NMotor::setSpeed(float p_speed) const {
     ESP_LOGD(TAG, "Setting L298N speed to %.2f", p_speed);
 
-    float p_duty = std::max(-1.0f, std::min(1.0f, p_speed));
+    float l_clampedSpeed = std::max(-1.0f, std::min(1.0f, p_speed));
 
-    esp_err_t l_ret = setDirection(p_duty);
+    esp_err_t l_ret = setDirection(l_clampedSpeed);
     if (l_ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to set direction");
         return l_ret;
     }
 
-    l_ret = m_pwm->setDuty(p_duty);
+    float l_duty = std::abs(l_clampedSpeed);
+
+    l_ret = m_pwm->setDuty(l_duty);
     if (l_ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to set duty");
         return l_ret;

@@ -26,9 +26,14 @@ esp_err_t LEDCPWM::init(const LEDCChannelConfig& p_channelConfig, uint32_t p_max
         ESP_LOGD(TAG, "Setting duty for LEDC Channel Num: %d, Speed Mode: %d, Timer Num: %d, GPIO Num: %d, Duty: %.2f", 
             p_channelConfig.channelNum, p_channelConfig.speedMode, p_channelConfig.timerNum, p_channelConfig.pinNum, p_duty);
 
-        p_duty = static_cast<uint32_t>(std::abs(p_duty) * p_maxDuty);
+        if (p_duty < 0) {
+            ESP_LOGE(TAG, "Duty cannot be negative");
+            return ESP_ERR_INVALID_ARG;
+        }
+
+        uint32_t l_duty = static_cast<uint32_t>(p_duty * p_maxDuty);
         
-        esp_err_t l_ret = ledc_set_duty(p_channelConfig.speedMode, p_channelConfig.channelNum, p_duty);
+        esp_err_t l_ret = ledc_set_duty(p_channelConfig.speedMode, p_channelConfig.channelNum, l_duty);
         if (l_ret != ESP_OK) {
             ESP_LOGE(TAG, "Failed to set duty for LEDC %d: %s", p_channelConfig.channelNum, esp_err_to_name(l_ret));
             return l_ret;
