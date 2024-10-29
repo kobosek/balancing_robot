@@ -1,17 +1,10 @@
 #pragma once
 
 #include "interface/II2CDevice.hpp"
-#include "driver/i2c_master.h"
+#include "include/ConfigTypes.hpp"
 #include <memory>
 
 class II2CBus;
-
-struct I2CDeviceConfig {
-    uint16_t deviceAddress = 0x68;
-    i2c_addr_bit_len_t addressLenght = I2C_ADDR_BIT_LEN_7;
-    uint32_t sclFreq = 400000;
-    uint32_t sclWait = 0;
-};
 
 class I2CDevice : public II2CDevice {
     public:

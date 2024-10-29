@@ -1,18 +1,9 @@
 #pragma once
 
 #include "interface/II2CBus.hpp"
+#include "include/ConfigTypes.hpp"
 
 class IGPIO;
-
-struct I2CBusConfig {
-    gpio_num_t sdaPin;
-    gpio_num_t sclPin;
-    i2c_port_num_t port = I2C_NUM_0;
-    i2c_clock_source_t clockSource = I2C_CLK_SRC_DEFAULT;
-    uint8_t glitchIgnoreCount = 7;
-    int interruptPriority = 0;
-    uint32_t internalPullUp = 1;
-};
 
 class I2CBus : public II2CBus {
     public:

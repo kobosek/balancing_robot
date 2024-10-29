@@ -1,13 +1,6 @@
 #pragma once 
 #include "interface/IGPIO.hpp"
-
-struct GPIOConfig {
-    gpio_num_t pinNum;
-    gpio_mode_t gpioMode = GPIO_MODE_OUTPUT;
-    gpio_pullup_t internalPullUp = GPIO_PULLUP_DISABLE;
-    gpio_pulldown_t internalPullDown = GPIO_PULLDOWN_DISABLE;
-    gpio_int_type_t interruptType = GPIO_INTR_DISABLE;
-};
+#include "include/ConfigTypes.hpp"
 
 class GPIO : public IGPIO {
     public:
