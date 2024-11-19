@@ -89,11 +89,6 @@ struct LEDCChannelConfig {
     uint32_t maxDuty = 0;
 };
 
-struct LEDCConfig {
-    std::vector<LEDCTimerConfig> timerConfigs;
-    std::vector<LEDCChannelConfig> channelConfigs;
-};
-
 struct MCPWMTimerConfig {
 };
 
@@ -105,4 +100,21 @@ struct WIFIConfig {
     std::string staSSID;
     std::string staPassword;
     wifi_auth_mode_t authMode;
+};
+struct GPIOSConfig {
+    std::vector<GPIOConfig> gpioConfigs;
+};
+
+struct LEDCConfig {
+    std::vector<LEDCTimerConfig> timerConfigs;
+    std::vector<LEDCChannelConfig> channelConfigs;
+};
+
+struct HardwareConfig {
+    GPIOSConfig gpioConfigs;
+    LEDCConfig ledcConfigs;
+    I2CDeviceConfig i2cDeviceConfig;
+    I2CBusConfig i2cBusConfig;
+    MPU6050Config mpu6050Config;
+    WIFIConfig wifiConfig;
 };

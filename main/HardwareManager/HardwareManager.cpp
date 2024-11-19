@@ -2,21 +2,38 @@
 #include "include/LEDCTimer.hpp"
 #include "include/LEDCPWM.hpp"
 #include "Components/Include/GPIO.hpp"
-#include "ConfigValidation/Include/LEDCConfigValidator.hpp"
-#include "ConfigValidation/Include/GPIOConfigValidator.hpp"
+#include "ConfigValidation/Include/IConfigValidator.hpp"
 #include "esp_err.h"
 #include "esp_log.h"
 #include <algorithm>
 #include <unordered_set>
 
-esp_err_t HardwareManager::configureLEDCPWM(const LEDCConfig& p_config) {
-    esp_err_t l_ret = LEDCConfigValidator::validateConfig(p_config);
-    if (l_ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to validate config");
+esp_err_t HardwareManager::configure(const HardwareConfig& p_config) {
+    esp_err_t l_ret = ESP_OK;
+    for (const auto& l_configValidator : m_configValidators) {
+        l_ret = l_configValidator->validateConfig(p_config);
+        if (l_ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to validate config");
+            return l_ret;
+        }
+    }
+    l_ret = configureLEDCPWM(p_config.ledcConfigs);
+    if (l_ret != ESP_OK) {  
+        ESP_LOGE(TAG, "Failed to configure LEDC PWM");
         return l_ret;
     }
 
-    l_ret = configureAndInitializeTimers(p_config);
+    l_ret = configureGPIO(p_config.gpioConfigs);
+    if (l_ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to configure GPIO");
+        return l_ret;
+    }
+
+    return ESP_OK;
+}
+
+esp_err_t HardwareManager::configureLEDCPWM(const LEDCConfig& p_config) {
+    esp_err_t l_ret = configureAndInitializeTimers(p_config);
     if (l_ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to configure timers");
         return l_ret;
@@ -29,6 +46,26 @@ esp_err_t HardwareManager::configureLEDCPWM(const LEDCConfig& p_config) {
     }
     return ESP_OK;
 }   
+
+esp_err_t HardwareManager::configureGPIO(const GPIOSConfig& p_config) {
+    esp_err_t l_ret = GPIOConfigValidator::validateConfig(p_config);
+    if (l_ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to validate GPIO config");
+        return l_ret;
+    }
+
+    for (const auto& l_gpioConfig : p_config.gpioConfigs) {
+        auto l_gpio = std::make_shared<GPIO>(l_gpioConfig);
+        l_ret = l_gpio->init();
+        if (l_ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to initialize GPIO");
+            return l_ret;
+        }
+        m_gpios[l_gpioConfig.pinNum] = l_gpio;
+        ESP_LOGI(TAG, "GPIO pin %d configured successfully", l_gpioConfig.pinNum);
+    }
+    return ESP_OK;
+}
 
 esp_err_t HardwareManager::configureAndInitializeTimers(const LEDCConfig& p_config) {
     for (const auto& l_timerConfig : p_config.timerConfigs) {
@@ -74,32 +111,4 @@ esp_err_t HardwareManager::configureAndInitializeChannels(const LEDCConfig& p_co
         }
     }
     return ESP_OK;
-}
-
-esp_err_t HardwareManager::configureGPIO(const GPIOConfig& p_config) {
-    esp_err_t l_ret = GPIOConfigValidator::validateConfig(p_config);
-    if (l_ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to validate GPIO config");
-        return l_ret;
-    }
-
-    auto l_gpio = std::make_shared<GPIO>(p_config);
-    l_ret = l_gpio->init();
-    if (l_ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to initialize GPIO");
-        return l_ret;
-    }
-
-    m_gpios[p_config.pinNum] = l_gpio;
-    ESP_LOGI(TAG, "GPIO pin %d configured successfully", p_config.pinNum);
-    return ESP_OK;
-}
-
-std::shared_ptr<IGPIO> HardwareManager::getGPIO(gpio_num_t p_pinNum) const {
-    auto l_it = m_gpios.find(p_pinNum);
-    if (l_it != m_gpios.end()) {
-        return l_it->second;
-    }
-    ESP_LOGW(TAG, "GPIO pin %d not found", p_pinNum);
-    return nullptr;
 }
