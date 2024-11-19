@@ -20,6 +20,8 @@ public:
     esp_err_t configureGPIO(const GPIOSConfig&);
 
 private:
+    static constexpr const char* TAG = "HardwareManager";
+
     HardwareManager() = default;
 
     esp_err_t configureAndInitializeTimers(const LEDCConfig&);
@@ -27,6 +29,7 @@ private:
 
     std::map<ledc_timer_t, std::shared_ptr<ILEDCTimer>> m_highSpeedTimers;
     std::map<ledc_timer_t, std::shared_ptr<ILEDCTimer>> m_lowSpeedTimers;
+    
     std::map<ledc_channel_t, std::shared_ptr<ILEDCPWM>> m_highSpeedChannels;
     std::map<ledc_channel_t, std::shared_ptr<ILEDCPWM>> m_lowSpeedChannels;
 
@@ -36,6 +39,4 @@ private:
         std::make_unique<LEDCConfigValidator>(),
         std::make_unique<GPIOSConfigValidator>()
     };
-
-    static constexpr const char* TAG = "HardwareManager";
 };
