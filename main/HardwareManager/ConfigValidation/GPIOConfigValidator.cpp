@@ -7,15 +7,15 @@
 esp_err_t GPIOConfigValidator::validateConfig(const HardwareConfig& p_config) {
     ESP_LOGD(TAG, "Validating GPIO configuration");
 
-    const GPIOSConfig& l_config = p_config.gpioConfigs;
+    const GPIOSConfig& l_configs = p_config.gpioConfigs;
     
-    for (const auto& l_gpioConfig : l_config.gpioConfigs) {
+    for (const auto& l_gpioConfig : l_configs) {
         esp_err_t l_ret = validateSingleGPIOConfig(l_gpioConfig);
         if (l_ret != ESP_OK) {
             return l_ret;
         }
     }
-    return validateUniquePinNumbers(l_config);
+    return validateUniquePinNumbers(l_configs);
 }
 
 esp_err_t GPIOConfigValidator::validateSingleGPIOConfig(const GPIOConfig& p_config) {
@@ -35,7 +35,7 @@ esp_err_t GPIOConfigValidator::validateUniquePinNumbers(const GPIOSConfig& p_con
     std::unordered_set<int> l_usedPins;
     ESP_LOGD(TAG, "Validating unique pin numbers in GPIO configuration");
     
-    for (const auto& l_gpioConfig : p_config.gpioConfigs) {
+    for (const auto& l_gpioConfig : p_config) {
         if (!l_usedPins.insert(l_gpioConfig.pinNum).second) {
             ESP_LOGE(TAG, "Duplicate GPIO pin number: %d", l_gpioConfig.pinNum);
             return ESP_ERR_INVALID_ARG;

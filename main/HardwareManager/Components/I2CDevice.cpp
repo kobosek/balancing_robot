@@ -3,7 +3,14 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
-I2CDevice::I2CDevice(const I2CDeviceConfig& p_config, const std::shared_ptr<II2CBus> p_i2cbus) : m_config(p_config), m_i2cbus(p_i2cbus), m_deviceHandle(NULL) {}
+I2CDevice::I2CDevice(const I2CDeviceConfig& p_config, const std::shared_ptr<II2CBus> p_i2cbus) 
+    : m_config(p_config), m_i2cbus(p_i2cbus), m_deviceHandle(NULL) {}
+
+I2CDevice::~I2CDevice() {
+    if (m_deviceHandle != NULL) {
+        i2c_del_device(m_deviceHandle);
+    }
+}
 
 esp_err_t I2CDevice::init() {
     ESP_LOGD(TAG, "Initializing I2C Device Address: 0x%02X, SCL Freq: %d",
@@ -16,7 +23,7 @@ esp_err_t I2CDevice::init() {
         .scl_wait_us = m_config.sclWait
     };
     
-    if(!m_i2cbus) {
+    if (!m_i2cbus) {
         setStateError();
         ESP_LOGE(TAG, "I2C Bus is not initialized: %s", esp_err_to_name(ESP_ERR_INVALID_STATE));
         return ESP_ERR_INVALID_STATE;
@@ -36,7 +43,7 @@ esp_err_t I2CDevice::init() {
 esp_err_t I2CDevice::writeRegister(uint8_t l_registerAddress, uint8_t l_data) const {
     ESP_LOGD(TAG, "Writing register 0x%02X with data 0x%02X", l_registerAddress, l_data);
 
-    if(!isInitialized()) {
+    if (!isInitialized()) {
         return notInitialized();
     }
 
@@ -50,23 +57,31 @@ esp_err_t I2CDevice::writeRegister(uint8_t l_registerAddress, uint8_t l_data) co
     return ESP_OK;
 }
 
-esp_err_t I2CDevice::readRegisters(uint8_t l_registerAddress, uint8_t* l_data, size_t len) const {
-    ESP_LOGD(TAG, "Reading register 0x%02X", l_registerAddress);
+esp_err_t I2CDevice::readRegisters(uint8_t l_registerAddress, uint8_t* l_data, size_t l_size) const {
+    ESP_LOGD(TAG, "Reading %zu bytes from register 0x%02X", l_size, l_registerAddress);
 
-    if(!isInitialized()) {
+    if (!isInitialized()) {
         return notInitialized();
     }
 
-    esp_err_t l_ret = i2c_master_transmit_receive(m_deviceHandle, &l_registerAddress, 1, l_data, len, -1);
+    esp_err_t l_ret = i2c_master_transmit(m_deviceHandle, &l_registerAddress, 1, -1);
     if (l_ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to read register 0x%02X: %s", l_registerAddress, esp_err_to_name(l_ret));
+        ESP_LOGE(TAG, "Failed to write register address 0x%02X: %s", l_registerAddress, esp_err_to_name(l_ret));
         return l_ret;
     }
-    ESP_LOGV(TAG, "Register 0x%02X read successfully", l_registerAddress);
+
+    l_ret = i2c_master_receive(m_deviceHandle, l_data, l_size, -1);
+    if (l_ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to read %zu bytes from register 0x%02X: %s", l_size, l_registerAddress, esp_err_to_name(l_ret));
+        return l_ret;
+    }
+
+    ESP_LOGV(TAG, "Successfully read %zu bytes from register 0x%02X", l_size, l_registerAddress);
     return ESP_OK;
 }
 
 esp_err_t I2CDevice::notInitialized() const {
-    ESP_LOGE(TAG, "I2C Device is not initialized: %s", esp_err_to_name(ESP_ERR_INVALID_STATE));
+    ESP_LOGE(TAG, "I2C Device with address 0x%02X is not initialized: %s", 
+             m_config.deviceAddress, esp_err_to_name(ESP_ERR_INVALID_STATE));
     return ESP_ERR_INVALID_STATE;
 }

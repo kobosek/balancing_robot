@@ -46,11 +46,13 @@ struct MPU6050Config {
     MPU6050AccelConfig accelRange = MPU6050AccelConfig::RANGE_2G;
     MPU6050GyroConfig gyroRange = MPU6050GyroConfig::RANGE_250_DEG;
 };
+
 struct I2CDeviceConfig {
     uint16_t deviceAddress = 0x68;
     i2c_addr_bit_len_t addressLenght = I2C_ADDR_BIT_LEN_7;
     uint32_t sclFreq = 400000;
     uint32_t sclWait = 0;
+    i2c_port_num_t busPort = I2C_NUM_0; 
 };
 
 struct I2CBusConfig {
@@ -70,6 +72,7 @@ struct GPIOConfig {
     gpio_pulldown_t internalPullDown = GPIO_PULLDOWN_DISABLE;
     gpio_int_type_t interruptType = GPIO_INTR_DISABLE;
 };
+
 struct LEDCTimerConfig {
     ledc_timer_t timerNum;
     ledc_mode_t speedMode = LEDC_HIGH_SPEED_MODE;
@@ -101,20 +104,23 @@ struct WIFIConfig {
     std::string staPassword;
     wifi_auth_mode_t authMode;
 };
-struct GPIOSConfig {
-    std::vector<GPIOConfig> gpioConfigs;
-};
+
+typedef std::vector<GPIOConfig> GPIOSConfig;
 
 struct LEDCConfig {
     std::vector<LEDCTimerConfig> timerConfigs;
     std::vector<LEDCChannelConfig> channelConfigs;
 };
 
+struct I2CConfig {
+    std::vector<I2CBusConfig> busConfigs;
+    std::vector<I2CDeviceConfig> deviceConfigs;
+};
+
 struct HardwareConfig {
     GPIOSConfig gpioConfigs;
     LEDCConfig ledcConfigs;
-    I2CDeviceConfig i2cDeviceConfig;
-    I2CBusConfig i2cBusConfig;
+    I2CConfig i2cConfigs;
     MPU6050Config mpu6050Config;
     WIFIConfig wifiConfig;
 };

@@ -1,5 +1,4 @@
 #pragma once
-
 #include "interface/II2CBus.hpp"
 
 class IGPIO;
