@@ -1,9 +1,13 @@
 #include "include/HardwareManager.hpp"
+
 #include "Components/include/LEDCTimer.hpp"
 #include "Components/include/LEDCPWM.hpp"
 #include "Components/Include/GPIO.hpp"
 #include "Components/Include/I2CBus.hpp"
 #include "Components/Include/I2CDevice.hpp"
+#include "Components/Include/WIFIController.hpp"
+#include "Components/Include/NVS.hpp"
+
 #include "ConfigValidation/Include/IConfigValidator.hpp"
 #include "esp_err.h"
 #include "esp_log.h"
@@ -12,6 +16,13 @@
 
 esp_err_t HardwareManager::configure(const HardwareConfig& p_config) {
     esp_err_t l_ret = ESP_OK;
+
+    l_ret = initializeNVS();
+    if (l_ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to initialize NVS");
+        return l_ret;
+    }
+
     for (const auto& l_configValidator : m_configValidators) {
         l_ret = l_configValidator->validateConfig(p_config);
         if (l_ret != ESP_OK) {
@@ -37,6 +48,12 @@ esp_err_t HardwareManager::configure(const HardwareConfig& p_config) {
         return l_ret;
     }
 
+    l_ret = configureWIFI(p_config.wifiConfig);
+    if (l_ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to configure WiFi");
+        return l_ret;
+    }
+
     return ESP_OK;
 }
 
@@ -56,6 +73,7 @@ esp_err_t HardwareManager::configureLEDCPWM(const LEDCConfig& p_config) {
 }   
 
 esp_err_t HardwareManager::configureGPIO(const GPIOSConfig& p_config) {
+    esp_err_t l_ret = ESP_OK;
     for (const auto& l_gpioConfig : p_config) {
         auto l_gpio = std::make_shared<GPIO>(l_gpioConfig);
         l_ret = l_gpio->init();
@@ -173,6 +191,41 @@ esp_err_t HardwareManager::configureAndInitializeDevices(const I2CConfig& p_conf
         m_i2cDevices.emplace(std::make_pair(l_deviceConfig.busPort, l_deviceConfig.deviceAddress), l_device);
         ESP_LOGD(TAG, "I2C device 0x%02X on bus %d configured successfully", 
                 l_deviceConfig.deviceAddress, l_deviceConfig.busPort);
+    }
+
+    return ESP_OK;
+}
+
+esp_err_t HardwareManager::configureWIFI(const WIFIConfig& p_config) {
+    ESP_LOGD(TAG, "Configuring WiFi");
+    
+    auto l_wifiController = std::make_shared<WIFIController>(p_config);
+    esp_err_t l_ret = l_wifiController->init();
+    if (l_ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to initialize WiFi controller");
+        return l_ret;
+    }
+
+    l_ret = l_wifiController->connect();
+    if (l_ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to connect to WiFi");
+        return l_ret;
+    }
+
+    return ESP_OK;
+}
+
+esp_err_t HardwareManager::initializeNVS() {
+    ESP_LOGD(TAG, "Initializing NVS");
+    
+    if (!m_nvs) {
+        m_nvs = std::make_shared<NVS>();
+    }
+    
+    esp_err_t l_ret = m_nvs->init();
+    if (l_ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to initialize NVS");
+        return l_ret;
     }
 
     return ESP_OK;
