@@ -3,44 +3,45 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
-MPU6050::MPU6050(std::unique_ptr<II2CDevice> p_i2cDevice) : m_i2cDevice(std::move(p_i2cDevice)) {}
+MPU6050::MPU6050(std::unique_ptr<II2CDevice> p_i2cDevice, const MPU6050Config& p_config) : 
+    m_config(p_config), m_i2cDevice(std::move(p_i2cDevice)) {}
 
 template<typename RegisterValueType>
 esp_err_t MPU6050::writeRegister(MPU6050Register l_register, RegisterValueType l_data) const {
-    if (!m_i2cDevice) {
-        ESP_LOGE(TAG, "I2C interface is not initialized");
-        return ESP_ERR_INVALID_STATE;
-    }
     return m_i2cDevice->writeRegister(static_cast<uint8_t>(l_register), static_cast<uint8_t>(l_data));
 }
 
 esp_err_t MPU6050::readRegisters(MPU6050Register l_register, uint8_t* l_data, size_t l_len) const {
-    if (!m_i2cDevice) {
-        ESP_LOGE(TAG, "I2C interface is not initialized");
-        return ESP_ERR_INVALID_STATE;
-    }
     return m_i2cDevice->readRegisters(static_cast<uint8_t>(l_register), l_data, l_len);
 }
-esp_err_t MPU6050::init(const MPU6050Config& p_config) {
-    ESP_LOGI(TAG, "Initializing MPU6050");
+esp_err_t MPU6050::init() {
+    ESP_LOGD(TAG, "Initializing MPU6050");
+
+    if (!m_i2cDevice) {
+        setStateError();
+        ESP_LOGE(TAG, "I2C interface is not initialized: %s", esp_err_to_name(ESP_ERR_INVALID_STATE));
+        return ESP_ERR_INVALID_STATE;
+    }
 
     esp_err_t l_ret = writeRegister(MPU6050Register::PWR_MGMT_1, MPU6050PowerManagement::CLOCK_INTERNAL);
     if (l_ret != ESP_OK) {
+        setStateError();
         ESP_LOGE(TAG, "Failed to set power management: %s", esp_err_to_name(l_ret));
         return l_ret;
     }
 
-    l_ret = updateConfig(p_config);
+    l_ret = configure(m_config);
     if (l_ret != ESP_OK) {
+        setStateError();
         ESP_LOGE(TAG, "Failed to configure sensor: %s", esp_err_to_name(l_ret));
         return l_ret;
     }
-
+    setStateInitialized();
     ESP_LOGI(TAG, "MPU6050 initialized successfully");
     return ESP_OK;
 }
 
-esp_err_t MPU6050::updateConfig(const MPU6050Config& p_config) {
+esp_err_t MPU6050::configure(const MPU6050Config& p_config) {
     esp_err_t l_ret = setDLPFConfig(p_config.dlpfConfig);
     if (l_ret != ESP_OK) return l_ret;
 
@@ -104,6 +105,10 @@ esp_err_t MPU6050::setGyroRange(MPU6050GyroConfig p_range) {
 
 template<typename T>
 esp_err_t MPU6050::readSensorData(MPU6050Register p_startRegister, T& p_data) const {
+    if (!isInitialized()) {
+        return notInitialized();
+    }
+
     std::array<uint8_t, 2> l_rawData;
     esp_err_t l_ret = readRegisters(p_startRegister, l_rawData.data(), l_rawData.size());
     if (l_ret == ESP_OK) {
@@ -128,6 +133,10 @@ esp_err_t MPU6050::readSensorData(MPU6050Register p_startRegister, T& p_data) co
 
 template<typename T>
 esp_err_t MPU6050::readSensorDataXYZ(MPU6050Register p_startRegister, T& p_dataXYZ) const {
+    if (!isInitialized()) {
+        return notInitialized();
+    }
+
     std::array<uint8_t, 6> l_rawData;
     esp_err_t l_ret = readRegisters(p_startRegister, l_rawData.data(), l_rawData.size());
     if (l_ret == ESP_OK) {
@@ -207,4 +216,9 @@ float MPU6050::scaleGyroscope(int16_t p_rawValue) const {
 
 float MPU6050::scaleTemperature(int16_t p_rawValue) const {
     return p_rawValue / 340.0f + 36.53f;
+}
+
+esp_err_t MPU6050::notInitialized() const {
+    ESP_LOGE(TAG, "MPU6050 is not initialized: %s", esp_err_to_name(ESP_ERR_INVALID_STATE));
+    return ESP_ERR_INVALID_STATE;
 }

@@ -45,6 +45,7 @@ struct LEDCChannelConfig {
     ledc_intr_type_t interruptType = LEDC_INTR_DISABLE;
     uint32_t duty = 0;
     int hpoint = 0;
+    uint32_t maxDuty = 0;
 };
 
 struct LEDCConfig {

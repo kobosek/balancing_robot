@@ -1,12 +1,10 @@
 #pragma once
 #include "driver/gpio.h"
+#include "interface/IHalComponent.hpp"
 
-typedef int esp_err_t;
-
-class IGPIO {
+class IGPIO : public IHalComponent {
     public:
         virtual ~IGPIO() = default;
-        virtual esp_err_t init() = 0;
         virtual esp_err_t setHigh() = 0;
         virtual esp_err_t setLow() = 0;
         virtual int getLevel() const = 0;

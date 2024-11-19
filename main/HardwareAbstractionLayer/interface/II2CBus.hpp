@@ -1,13 +1,9 @@
 #pragma once
 #include "driver/i2c_master.h"
+#include "IHalComponent.hpp"
 
-typedef int esp_err_t;
-
-class IGPIO;
-
-class II2CBus {
+class II2CBus : public IHalComponent {
     public:
         virtual ~II2CBus() = default;
-        virtual esp_err_t init() = 0;
         virtual esp_err_t registerDevice(const i2c_device_config_t&, i2c_master_dev_handle_t&) const = 0;
 };

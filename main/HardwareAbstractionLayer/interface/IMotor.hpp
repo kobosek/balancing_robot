@@ -1,10 +1,8 @@
 #pragma once
+#include "IHalComponent.hpp"
 
-typedef int esp_err_t;
-
-class IMotor {
+class IMotor : public IHalComponent {
     public:
         virtual ~IMotor() = default;
-        virtual esp_err_t init() = 0;
         virtual esp_err_t setSpeed(float speed) const = 0;
 };

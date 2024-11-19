@@ -1,8 +1,8 @@
 #pragma once
 #include "include/ConfigTypes.hpp"
+#include "IHalComponent.hpp"
 
-class ILEDCTimer {
+class ILEDCTimer : public IHalComponent {
     public:
         virtual ~ILEDCTimer() = default;
-        virtual esp_err_t init(const LEDCTimerConfig&) = 0;
 };

@@ -4,6 +4,11 @@ idf_component_register(SRCS
                         "I2CDevice.cpp"
                         "GPIO.cpp"
                         "WiFiManager.cpp"
+                        "L298NMotor.cpp"
+                        "MX1616HMotor.cpp"
+                        "LEDCPWM.cpp"
+                        "LEDCPWMManager.cpp"
+                        "LEDCTimer.cpp"
                        INCLUDE_DIRS 
                         "."
                        REQUIRES 

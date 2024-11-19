@@ -7,29 +7,42 @@ class II2CDevice;
 
 class MPU6050 : public IMPU6050 {
     public:
-        MPU6050(std::unique_ptr<II2CDevice>);
+        MPU6050(std::unique_ptr<II2CDevice>, const MPU6050Config&);
+        ~MPU6050() override = default;
+        MPU6050(const MPU6050&) = delete;
+        MPU6050& operator=(const MPU6050&) = delete;
+        MPU6050(MPU6050&&) = delete;
+        MPU6050& operator=(MPU6050&&) = delete;
 
+        //IAccelerometer
         esp_err_t getAccelerationX(float&) const override;
         esp_err_t getAccelerationY(float&) const override;
         esp_err_t getAccelerationZ(float&) const override;
         esp_err_t getAccelerationXYZ(AccelerationXYZ&) const override;    
 
+        //IGyroscope
         esp_err_t getAngularVelocityX(float&) const override;
         esp_err_t getAngularVelocityY(float&) const override;
         esp_err_t getAngularVelocityZ(float&) const override;
         esp_err_t getAngularVelocityXYZ(AngularVelocityXYZ&) const override;
 
+        //ITemperature
         esp_err_t getTemperature(float&) const override;    
 
-        esp_err_t init(const MPU6050Config&) override;
-        esp_err_t updateConfig(const MPU6050Config&) override;
+        //IHalComponent
+        esp_err_t init() override;
+
     private:
         static constexpr const char* TAG = "MPU6050";
 
+        esp_err_t notInitialized() const override;  
+
+        MPU6050Config m_config;
         std::unique_ptr<II2CDevice> m_i2cDevice;
         float m_accelerationScale;
         float m_gyroscopeScale;
 
+        esp_err_t configure(const MPU6050Config&);
         esp_err_t setDLPFConfig(MPU6050DLPFConfig);
         esp_err_t setSampleRate(MPU6050SampleRateDiv);
         esp_err_t setAccelRange(MPU6050AccelConfig);

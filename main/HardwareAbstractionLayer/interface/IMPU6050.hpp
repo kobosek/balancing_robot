@@ -3,6 +3,7 @@
 #include "interface/IAccelerometer.hpp"
 #include "interface/IGyroscope.hpp"
 #include "interface/ITempSensor.hpp"
+#include "interface/IHalComponent.hpp"
 
 enum class MPU6050Register : uint8_t {
     PWR_MGMT_1 = 0x6B,
@@ -61,9 +62,7 @@ struct MPU6050Config {
     MPU6050GyroConfig gyroRange = MPU6050GyroConfig::RANGE_250_DEG;
 };
 
-class IMPU6050 : public IAccelerometer, public IGyroscope, public ITempSensor {
+class IMPU6050 : public IAccelerometer, public IGyroscope, public ITempSensor, public IHalComponent {
     public:
         virtual ~IMPU6050() = default;
-        virtual esp_err_t init(const MPU6050Config&) = 0;
-        virtual esp_err_t updateConfig(const MPU6050Config&) = 0;
 };

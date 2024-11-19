@@ -29,9 +29,9 @@ esp_err_t LEDCPWMManager::configureTimersAndChannels(const LEDCConfig& p_config)
 
 esp_err_t LEDCPWMManager::configureAndInitializeTimers(const LEDCConfig& p_config) {
     for (const auto& l_timerConfig : p_config.timerConfigs) {
-        auto l_timer = std::make_shared<LEDCTimer>();
+        auto l_timer = std::make_shared<LEDCTimer>(l_timerConfig);
    
-        esp_err_t l_ret = l_timer->init(l_timerConfig);
+        esp_err_t l_ret = l_timer->init();
         if (l_ret != ESP_OK) { return l_ret; }
 
         if (l_timerConfig.speedMode == LEDC_HIGH_SPEED_MODE) {
