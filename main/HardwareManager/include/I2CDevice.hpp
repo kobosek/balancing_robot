@@ -1,7 +1,5 @@
 #pragma once
-
 #include "interface/II2CDevice.hpp"
-#include "include/ConfigTypes.hpp"
 #include <memory>
 
 class II2CBus;
@@ -9,7 +7,7 @@ class II2CBus;
 class I2CDevice : public II2CDevice {
     public:
         I2CDevice(const I2CDeviceConfig&, const std::shared_ptr<II2CBus>);
-        ~I2CDevice() override = default;
+        ~I2CDevice() = default;
         I2CDevice(const I2CDevice&) = delete;
         I2CDevice& operator=(const I2CDevice&) = delete;
         I2CDevice(I2CDevice&&) = delete;

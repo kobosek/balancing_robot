@@ -1,12 +1,10 @@
 #pragma once
 #include "interface/IPWM.hpp"
-#include "driver/ledc.h"
-#include <functional>
 
 class LEDCPWM : public IPWM {
     public:
         LEDCPWM(const LEDCChannelConfig&);
-        ~LEDCPWM() override = default;
+        ~LEDCPWM() = default;
         LEDCPWM(const LEDCPWM&) = delete;
         LEDCPWM& operator=(const LEDCPWM&) = delete;
         LEDCPWM(LEDCPWM&&) = delete;

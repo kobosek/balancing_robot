@@ -1,5 +1,4 @@
 #pragma once 
-
 #include "interface/IMotor.hpp"
 #include <memory>
 
@@ -8,7 +7,7 @@ class IPWM;
 class MX1616HMotor : public IMotor {
 public:
     MX1616HMotor(const std::shared_ptr<IPWM>, const std::shared_ptr<IPWM>);
-    ~MX1616HMotor() override = default;
+    ~MX1616HMotor() = default;
     MX1616HMotor(const MX1616HMotor&) = delete;
     MX1616HMotor& operator=(const MX1616HMotor&) = delete;
     MX1616HMotor(MX1616HMotor&&) = delete;

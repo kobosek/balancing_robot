@@ -1,5 +1,4 @@
 #pragma once
-
 #include "interface/IMotor.hpp"
 #include <memory>
 
@@ -10,7 +9,7 @@ class L298NMotor : public IMotor {
 
 public:
     L298NMotor(const std::shared_ptr<IGPIO>, const std::shared_ptr<IGPIO>, const std::shared_ptr<IPWM>);
-    ~L298NMotor() override = default;
+    ~L298NMotor() = default;
     L298NMotor(const L298NMotor&) = delete;
     L298NMotor& operator=(const L298NMotor&) = delete;
     L298NMotor(L298NMotor&&) = delete;

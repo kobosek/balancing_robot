@@ -1,5 +1,4 @@
 #pragma once
-
 #include "interface/IMPU6050.hpp"
 #include <memory>
 
@@ -8,7 +7,7 @@ class II2CDevice;
 class MPU6050 : public IMPU6050 {
     public:
         MPU6050(std::unique_ptr<II2CDevice>, const MPU6050Config&);
-        ~MPU6050() override = default;
+        ~MPU6050() = default;
         MPU6050(const MPU6050&) = delete;
         MPU6050& operator=(const MPU6050&) = delete;
         MPU6050(MPU6050&&) = delete;

@@ -1,11 +1,10 @@
 #pragma once 
 #include "interface/IGPIO.hpp"
-#include "include/ConfigTypes.hpp"
 
 class GPIO : public IGPIO {
     public:
         GPIO(const GPIOConfig&);
-        ~GPIO() override = default;
+        ~GPIO() = default;
         GPIO(const GPIO&) = delete;
         GPIO& operator=(const GPIO&) = delete;
         GPIO(GPIO&&) = delete;

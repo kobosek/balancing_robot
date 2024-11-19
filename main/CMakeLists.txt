@@ -23,6 +23,6 @@ idf_component_register(SRCS
                          spiffs
                          driver
                          json
-                         HardwareAbstractionLayer)
+                         HardwareManager)
 
 set(EXTRA_COMPONENT_DIRS $ENV{IDF_PATH}/components/json/cJSON)

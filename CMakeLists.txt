@@ -12,7 +12,7 @@ set(EXTRA_COMPONENT_DIRS
 project(balancing-robot)
 
 # Set the components to include
-set(COMPONENTS main HardwareAbstractionLayer)
+set(COMPONENTS main HardwareManager)
 
 # Specify the SPIFFS directory
 spiffs_create_partition_image(storage spiffs FLASH_IN_PROJECT)

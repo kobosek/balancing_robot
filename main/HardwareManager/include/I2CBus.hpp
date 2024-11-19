@@ -1,14 +1,13 @@
 #pragma once
 
 #include "interface/II2CBus.hpp"
-#include "include/ConfigTypes.hpp"
 
 class IGPIO;
 
 class I2CBus : public II2CBus {
     public:
         I2CBus(const I2CBusConfig&);
-        ~I2CBus() override = default;
+        ~I2CBus() = default;
         I2CBus(const I2CBus&) = delete;
         I2CBus& operator=(const I2CBus&) = delete;
         I2CBus(I2CBus&&) = delete;

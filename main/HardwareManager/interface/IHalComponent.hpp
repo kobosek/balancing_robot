@@ -1,6 +1,5 @@
 #pragma once
-
-typedef int esp_err_t;
+#include "include/ConfigTypes.hpp"
 
 enum class HalState {
     UNINITIALIZED,
@@ -13,9 +12,9 @@ class IHalComponent {
         virtual ~IHalComponent() = default;
         virtual esp_err_t init() = 0;
         virtual HalState getState() const { return m_state; };
+        virtual bool isInitialized() const { return m_state == HalState::INITALIZED; };
 
     protected:
-        virtual bool isInitialized() const { return m_state == HalState::INITALIZED; };
         virtual esp_err_t notInitialized() const = 0;
         void setStateUninitialized() { m_state = HalState::UNINITIALIZED; };
         void setStateInitialized() { m_state = HalState::INITALIZED; };

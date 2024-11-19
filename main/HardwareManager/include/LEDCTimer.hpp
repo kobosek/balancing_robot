@@ -4,7 +4,7 @@
 class LEDCTimer : public ILEDCTimer {
     public:
         LEDCTimer(const LEDCTimerConfig&);
-        ~LEDCTimer() override = default;
+        ~LEDCTimer() = default;
         LEDCTimer(const LEDCTimer&) = delete;
         LEDCTimer& operator=(const LEDCTimer&) = delete;
         LEDCTimer(LEDCTimer&&) = delete;
