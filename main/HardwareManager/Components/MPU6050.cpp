@@ -65,7 +65,7 @@ esp_err_t MPU6050::setDLPFConfig(MPU6050DLPFConfig p_config) {
     return ESP_OK
 }
 
-esp_err_t MPU6050::setSampleRate(MPU6050SampleRateDiv p_rate) {
+esp_err_t MPU6050::setSampleRate(MPU6050SampleRateConfig p_rate) {
     ESP_LOGD(TAG, "Setting sample rate");
     esp_err_t l_ret = writeRegister(MPU6050Register::SMPLRT_DIV, p_rate);
     if (l_ret != ESP_OK) {

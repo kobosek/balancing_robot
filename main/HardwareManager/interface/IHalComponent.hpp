@@ -1,5 +1,5 @@
 #pragma once
-#include "include/ConfigTypes.hpp"
+#include "include/HardwareConfigTypes.hpp"
 
 enum class HalState {
     UNINITIALIZED,

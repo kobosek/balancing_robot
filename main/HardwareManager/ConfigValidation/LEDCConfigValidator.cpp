@@ -1,78 +1,9 @@
-#include "include/LEDCPWMManager.hpp"
-#include "include/LEDCTimer.hpp"
-#include "include/LEDCPWM.hpp"
+#include "Include/LEDCConfigValidator.hpp"
+#include "esp_log.h"
 #include <algorithm>
 #include <unordered_set>
-#include "esp_err.h"
-#include "esp_log.h"
 
-esp_err_t LEDCPWMManager::configureTimersAndChannels(const LEDCConfig& p_config) {
-    esp_err_t l_ret = validateConfig(p_config);
-    if (l_ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to validate config");
-        return l_ret;
-    }
-
-    l_ret = configureAndInitializeTimers(p_config);
-    if (l_ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to configure timers");
-        return l_ret;
-    }
-
-    l_ret = configureAndInitializeChannels(p_config);
-    if (l_ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to configure channels");
-        return l_ret;
-    }
-    return ESP_OK;
-}   
-
-esp_err_t LEDCPWMManager::configureAndInitializeTimers(const LEDCConfig& p_config) {
-    for (const auto& l_timerConfig : p_config.timerConfigs) {
-        auto l_timer = std::make_shared<LEDCTimer>(l_timerConfig);
-   
-        esp_err_t l_ret = l_timer->init();
-        if (l_ret != ESP_OK) { return l_ret; }
-
-        if (l_timerConfig.speedMode == LEDC_HIGH_SPEED_MODE) {
-            m_highSpeedTimers.emplace(l_timerConfig.timerNum, l_timer); 
-        } else {
-            m_lowSpeedTimers.emplace(l_timerConfig.timerNum, l_timer); 
-        }
-    }
-    return ESP_OK;
-}
-
-esp_err_t LEDCPWMManager::configureAndInitializeChannels(const LEDCConfig& p_config) {
-    ESP_LOGD(TAG, "Configuring and initializing channels");
-    for (const auto& l_channelConfig : p_config.channelConfigs) {
-        ESP_LOGD(TAG, "Configuring channel %d", l_channelConfig.channelNum);
-        auto l_matchingTimer = std::find_if(p_config.timerConfigs.begin(), p_config.timerConfigs.end(),
-            [&l_channelConfig](const LEDCTimerConfig& p_timerConfig) {
-                return p_timerConfig.timerNum == l_channelConfig.timerNum 
-                    && p_timerConfig.speedMode == l_channelConfig.speedMode;
-            });
-        if (l_matchingTimer == p_config.timerConfigs.end()) {
-            ESP_LOGE(TAG, "Channel %d references non-existent or mismatched timer %d", l_channelConfig.channelNum, l_channelConfig.timerNum);
-            return ESP_ERR_INVALID_ARG;
-        }
-        else {
-            ESP_LOGD(TAG, "Found matching timer %d", l_channelConfig.timerNum);
-            const auto l_maxDuty = 1 << l_matchingTimer->dutyResolution - 1;
-            
-            auto l_pwm = std::make_shared<LEDCPWM>();
-            esp_err_t l_ret = l_pwm->init(l_channelConfig, l_maxDuty);
-
-            if (l_channelConfig.speedMode == LEDC_HIGH_SPEED_MODE) {
-                m_highSpeedChannels.emplace(l_channelConfig.channelNum, l_pwm);
-            } else {
-                m_lowSpeedChannels.emplace(l_channelConfig.channelNum, l_pwm);
-            }
-        }
-    }
-    return ESP_OK;
-}
-esp_err_t LEDCPWMManager::validateConfig(const LEDCConfig& p_config) const {
+esp_err_t LEDCConfigValidator::validateConfig(const LEDCConfig& p_config) {
     esp_err_t l_ret = validateNumberOfTimers(p_config, LEDC_HIGH_SPEED_MODE);
     if (l_ret != ESP_OK) { return l_ret; }
 
@@ -100,7 +31,7 @@ esp_err_t LEDCPWMManager::validateConfig(const LEDCConfig& p_config) const {
     return ESP_OK;
 }
 
-esp_err_t LEDCPWMManager::validateNumberOfTimers(const LEDCConfig& p_config, ledc_mode_t p_speedMode) const {
+esp_err_t LEDCConfigValidator::validateNumberOfTimers(const LEDCConfig& p_config, ledc_mode_t p_speedMode) {
     auto l_count = std::count_if(p_config.timerConfigs.begin(), p_config.timerConfigs.end(), 
         [p_speedMode](const LEDCTimerConfig& p_timerConfig) { return p_timerConfig.speedMode == p_speedMode;}); 
 
@@ -113,11 +44,10 @@ esp_err_t LEDCPWMManager::validateNumberOfTimers(const LEDCConfig& p_config, led
     return ESP_OK;
 }
 
-
-esp_err_t LEDCPWMManager::validateTimerIds(const LEDCConfig& p_config) const {
+esp_err_t LEDCConfigValidator::validateTimerIds(const LEDCConfig& p_config) {
     ESP_LOGD(TAG, "Validating timer IDs in configuration");
     auto l_invalidTimer = std::find_if(p_config.timerConfigs.begin(), p_config.timerConfigs.end(), 
-        [](const LEDCTimerConfig& p_timerConfig) { return p_timerConfig.timerNum > LEDC_TIMER_MAX; });
+        [](const LEDCTimerConfig& p_timerConfig) { return p_timerConfig.timerNum >= LEDC_TIMER_MAX; });
 
     if (l_invalidTimer != p_config.timerConfigs.end()) {
         ESP_LOGE(TAG, "Invalid timer id %d", l_invalidTimer->timerNum);
@@ -126,7 +56,7 @@ esp_err_t LEDCPWMManager::validateTimerIds(const LEDCConfig& p_config) const {
     return ESP_OK;
 }
 
-esp_err_t LEDCPWMManager::validateUniqueTimerIds(const LEDCConfig& p_config) const {
+esp_err_t LEDCConfigValidator::validateUniqueTimerIds(const LEDCConfig& p_config) {
     std::unordered_set<ledc_timer_t> l_highSpeedTimerIds, l_lowSpeedTimerIds;
     ESP_LOGD(TAG, "Validating unique timer IDs in configuration");
     for (const auto& l_timerConfig : p_config.timerConfigs) {
@@ -139,7 +69,7 @@ esp_err_t LEDCPWMManager::validateUniqueTimerIds(const LEDCConfig& p_config) con
     return ESP_OK;
 }
 
-esp_err_t LEDCPWMManager::validateNumberOfChannels(const LEDCConfig& p_config, ledc_mode_t p_speedMode) const {
+esp_err_t LEDCConfigValidator::validateNumberOfChannels(const LEDCConfig& p_config, ledc_mode_t p_speedMode) {
     auto l_count = std::count_if(p_config.channelConfigs.begin(), p_config.channelConfigs.end(),
         [p_speedMode](const LEDCChannelConfig& p_channelConfig) { return p_channelConfig.speedMode == p_speedMode; });
 
@@ -152,7 +82,7 @@ esp_err_t LEDCPWMManager::validateNumberOfChannels(const LEDCConfig& p_config, l
     return ESP_OK;
 }
 
-esp_err_t LEDCPWMManager::validateChannelIds(const LEDCConfig& p_config) const {
+esp_err_t LEDCConfigValidator::validateChannelIds(const LEDCConfig& p_config) {
     ESP_LOGD(TAG, "Validating channel IDs in configuration");
     auto invalidChannel = std::find_if(p_config.channelConfigs.begin(), p_config.channelConfigs.end(),
         [](const LEDCChannelConfig& p_channelConfig) { return p_channelConfig.channelNum >= LEDC_CHANNEL_MAX; });
@@ -164,8 +94,8 @@ esp_err_t LEDCPWMManager::validateChannelIds(const LEDCConfig& p_config) const {
     return ESP_OK;
 }
 
-esp_err_t LEDCPWMManager::validateUniqueChannelIds(const LEDCConfig& p_config) const {
-    std::unordered_set<ledc_timer_t> l_highSpeedChannelIds, l_lowSpeedChannelIds;
+esp_err_t LEDCConfigValidator::validateUniqueChannelIds(const LEDCConfig& p_config) {
+    std::unordered_set<ledc_channel_t> l_highSpeedChannelIds, l_lowSpeedChannelIds;
     ESP_LOGD(TAG, "Validating unique channel IDs in configuration");
     for (const auto& l_channelConfig : p_config.channelConfigs) {
         auto& l_channelSet = (l_channelConfig.speedMode == LEDC_HIGH_SPEED_MODE) ? l_highSpeedChannelIds : l_lowSpeedChannelIds;

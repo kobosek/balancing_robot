@@ -2,6 +2,25 @@
 #include "interface/IMPU6050.hpp"
 #include <memory>
 
+enum class MPU6050Register : uint8_t {
+    PWR_MGMT_1 = 0x6B,
+    SMPLRT_DIV = 0x19,
+    DLPF_CONFIG = 0x1A,
+    GYRO_CONFIG = 0x1B,
+    ACCEL_CONFIG = 0x1C,
+    ACCEL_XOUT_H = 0x3B,
+    ACCEL_YOUT_H = 0x3D,
+    ACCEL_ZOUT_H = 0x3F,
+    TEMP_OUT_H = 0x41,
+    GYRO_XOUT_H = 0x43,
+    GYRO_YOUT_H = 0x45,
+    GYRO_ZOUT_H = 0x47
+};
+
+enum class MPU6050PowerManagement : uint8_t {
+    CLOCK_INTERNAL = 0x00 // Internal 8MHz oscillator
+};
+
 class II2CDevice;
 
 class MPU6050 : public IMPU6050 {
@@ -43,7 +62,7 @@ class MPU6050 : public IMPU6050 {
 
         esp_err_t configure(const MPU6050Config&);
         esp_err_t setDLPFConfig(MPU6050DLPFConfig);
-        esp_err_t setSampleRate(MPU6050SampleRateDiv);
+        esp_err_t setSampleRate(MPU6050SampleRateConfig);
         esp_err_t setAccelRange(MPU6050AccelConfig);
         esp_err_t setGyroRange(MPU6050GyroConfig);
 

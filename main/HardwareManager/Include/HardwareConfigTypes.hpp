@@ -9,25 +9,6 @@
 
 typedef int esp_err_t;
 
-enum class MPU6050Register : uint8_t {
-    PWR_MGMT_1 = 0x6B,
-    SMPLRT_DIV = 0x19,
-    DLPF_CONFIG = 0x1A,
-    GYRO_CONFIG = 0x1B,
-    ACCEL_CONFIG = 0x1C,
-    ACCEL_XOUT_H = 0x3B,
-    ACCEL_YOUT_H = 0x3D,
-    ACCEL_ZOUT_H = 0x3F,
-    TEMP_OUT_H = 0x41,
-    GYRO_XOUT_H = 0x43,
-    GYRO_YOUT_H = 0x45,
-    GYRO_ZOUT_H = 0x47
-};
-
-enum class MPU6050PowerManagement : uint8_t {
-    CLOCK_INTERNAL = 0x00 // Internal 8MHz oscillator
-};
-
 enum class MPU6050AccelConfig : uint8_t {
     RANGE_2G = 0x00,  // ± 2g
     RANGE_4G = 0x08,  // ± 4g
@@ -52,7 +33,7 @@ enum class MPU6050DLPFConfig : uint8_t {
     DLPF_BW_5HZ_ACC_5HZ_GYRO = 0x06,     // 5 Hz Acc, 5 Hz Gyro
 };
 
-enum class MPU6050SampleRateDiv : uint8_t {
+enum class MPU6050SampleRateConfig : uint8_t {
     RATE_1KHZ = 0x00,  // 1 kHz sampling rate
     RATE_500HZ = 0x01, // 500 Hz sampling rate
     RATE_250HZ = 0x03, // 250 Hz sampling rate
@@ -61,7 +42,7 @@ enum class MPU6050SampleRateDiv : uint8_t {
 
 struct MPU6050Config {
     MPU6050DLPFConfig dlpfConfig = MPU6050DLPFConfig::DLPF_BW_44HZ_ACC_42HZ_GYRO;
-    MPU6050SampleRateDiv sampleRate = MPU6050SampleRateDiv::RATE_1KHZ;
+    MPU6050SampleRateConfig sampleRate = MPU6050SampleRateConfig::RATE_1KHZ;
     MPU6050AccelConfig accelRange = MPU6050AccelConfig::RANGE_2G;
     MPU6050GyroConfig gyroRange = MPU6050GyroConfig::RANGE_250_DEG;
 };
