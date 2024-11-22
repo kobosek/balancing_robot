@@ -199,14 +199,16 @@ esp_err_t HardwareManager::configureAndInitializeDevices(const I2CConfig& p_conf
 esp_err_t HardwareManager::configureWIFI(const WIFIConfig& p_config) {
     ESP_LOGD(TAG, "Configuring WiFi");
     
-    auto l_wifiController = std::make_shared<WIFIController>(p_config);
+    if (!m_wifiController) {
+        m_wifiController = std::make_shared<WIFIController>(p_config);
+    }
     esp_err_t l_ret = l_wifiController->init();
     if (l_ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to initialize WiFi controller");
         return l_ret;
     }
 
-    l_ret = l_wifiController->connect();
+    l_ret = m_wifiController->connect();
     if (l_ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to connect to WiFi");
         return l_ret;

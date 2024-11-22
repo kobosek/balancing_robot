@@ -15,6 +15,7 @@ class IGPIO;
 class II2CBus;
 class II2CDevice;
 class INVS;
+class IWIFIController;
 
 class HardwareManager {
 public:
@@ -46,7 +47,9 @@ private:
     
     std::map<i2c_port_num_t, std::shared_ptr<II2CBus>> m_i2cBuses;
     std::map<std::pair<i2c_port_num_t, uint16_t>, std::shared_ptr<II2CDevice>> m_i2cDevices;
+
     std::shared_ptr<INVS> m_nvs;
+    std::shared_ptr<IWIFIController> m_wifiController;
 
     std::vector<std::unique_ptr<IConfigValidator>> m_configValidators = {
         std::make_unique<LEDCConfigValidator>(),
