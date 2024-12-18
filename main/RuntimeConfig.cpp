@@ -114,16 +114,25 @@ std::string RuntimeConfig::toJson() const {
     cJSON_AddStringToObject(wifi, "password", wifi_password.c_str());
     cJSON_AddItemToObject(root, "wifi", wifi);
 
-    cJSON *pid = cJSON_CreateObject();
-    cJSON_AddNumberToObject(pid, "kp", pid_kp);
-    cJSON_AddNumberToObject(pid, "ki", pid_ki);
-    cJSON_AddNumberToObject(pid, "kd", pid_kd);
-    cJSON_AddNumberToObject(pid, "target_angle", pid_target_angle);
-    cJSON_AddNumberToObject(pid, "output_min", pid_output_min);
-    cJSON_AddNumberToObject(pid, "output_max", pid_output_max);
-    cJSON_AddNumberToObject(pid, "iterm_min", pid_iterm_min);
-    cJSON_AddNumberToObject(pid, "iterm_max", pid_iterm_max);
-    cJSON_AddItemToObject(root, "pid", pid);
+    cJSON *pid_angle = cJSON_CreateObject();
+    cJSON_AddNumberToObject(pid_angle, "kp", anglePidConfig.pid_kp);
+    cJSON_AddNumberToObject(pid_angle, "ki", anglePidConfig.pid_ki);
+    cJSON_AddNumberToObject(pid_angle, "kd", anglePidConfig.pid_kd);
+    cJSON_AddNumberToObject(pid_angle, "output_min", anglePidConfig.pid_output_min);
+    cJSON_AddNumberToObject(pid_angle, "output_max", anglePidConfig.pid_output_max);
+    cJSON_AddNumberToObject(pid_angle, "iterm_min", anglePidConfig.pid_iterm_min);
+    cJSON_AddNumberToObject(pid_angle, "iterm_max", anglePidConfig.pid_iterm_max);
+    cJSON_AddItemToObject(root, "pid_angle", pid_angle);
+
+    cJSON *pid_speed = cJSON_CreateObject();
+    cJSON_AddNumberToObject(pid_speed, "kp", speedPidConfig.pid_kp);
+    cJSON_AddNumberToObject(pid_speed, "ki", speedPidConfig.pid_ki);
+    cJSON_AddNumberToObject(pid_speed, "kd", speedPidConfig.pid_kd);
+    cJSON_AddNumberToObject(pid_speed, "output_min", speedPidConfig.pid_output_min);
+    cJSON_AddNumberToObject(pid_speed, "output_max", speedPidConfig.pid_output_max);
+    cJSON_AddNumberToObject(pid_speed, "iterm_min", speedPidConfig.pid_iterm_min);
+    cJSON_AddNumberToObject(pid_speed, "iterm_max", speedPidConfig.pid_iterm_max);
+    cJSON_AddItemToObject(root, "pid_speed", pid_speed);
 
     cJSON *mpu6050 = cJSON_CreateObject();
     cJSON_AddNumberToObject(mpu6050, "calibration_samples", mpu6050_calibration_samples);
@@ -167,17 +176,30 @@ esp_err_t RuntimeConfig::fromJson(const std::string& json) {
         ESP_LOGW(TAG, "WiFi configuration not found in JSON");
     }
 
-    cJSON *pid = cJSON_GetObjectItem(root, "pid");
-    if (pid) {
-        if ((item = cJSON_GetObjectItem(pid, "kp")) && cJSON_IsNumber(item)) pid_kp = item->valuedouble;
-        if ((item = cJSON_GetObjectItem(pid, "ki")) && cJSON_IsNumber(item)) pid_ki = item->valuedouble;
-        if ((item = cJSON_GetObjectItem(pid, "kd")) && cJSON_IsNumber(item)) pid_kd = item->valuedouble;
-        if ((item = cJSON_GetObjectItem(pid, "target_angle")) && cJSON_IsNumber(item)) pid_target_angle = item->valuedouble;
-        if ((item = cJSON_GetObjectItem(pid, "output_min")) && cJSON_IsNumber(item)) pid_output_min = item->valuedouble;
-        if ((item = cJSON_GetObjectItem(pid, "output_max")) && cJSON_IsNumber(item)) pid_output_max = item->valuedouble;
-        if ((item = cJSON_GetObjectItem(pid, "iterm_min")) && cJSON_IsNumber(item)) pid_iterm_min = item->valuedouble;
-        if ((item = cJSON_GetObjectItem(pid, "iterm_max")) && cJSON_IsNumber(item)) pid_iterm_max = item->valuedouble;
-        ESP_LOGI(TAG, "Loaded PID configuration");
+    cJSON *pid_angle = cJSON_GetObjectItem(root, "pid_angle");
+    if (pid_angle) {
+        if ((item = cJSON_GetObjectItem(pid_angle, "kp")) && cJSON_IsNumber(item)) anglePidConfig.pid_kp = item->valuedouble;
+        if ((item = cJSON_GetObjectItem(pid_angle, "ki")) && cJSON_IsNumber(item)) anglePidConfig.pid_ki = item->valuedouble;
+        if ((item = cJSON_GetObjectItem(pid_angle, "kd")) && cJSON_IsNumber(item)) anglePidConfig.pid_kd = item->valuedouble;
+        if ((item = cJSON_GetObjectItem(pid_angle, "output_min")) && cJSON_IsNumber(item)) anglePidConfig.pid_output_min = item->valuedouble;
+        if ((item = cJSON_GetObjectItem(pid_angle, "output_max")) && cJSON_IsNumber(item)) anglePidConfig.pid_output_max = item->valuedouble;
+        if ((item = cJSON_GetObjectItem(pid_angle, "iterm_min")) && cJSON_IsNumber(item)) anglePidConfig.pid_iterm_min = item->valuedouble;
+        if ((item = cJSON_GetObjectItem(pid_angle, "iterm_max")) && cJSON_IsNumber(item)) anglePidConfig.pid_iterm_max = item->valuedouble;
+        ESP_LOGI(TAG, "Loaded Angle PID configuration");
+    } else {
+        ESP_LOGW(TAG, "PID configuration not found in JSON");
+    }
+
+    cJSON *pid_speed = cJSON_GetObjectItem(root, "pid_speed");
+    if (pid_speed) {
+        if ((item = cJSON_GetObjectItem(pid_speed, "kp")) && cJSON_IsNumber(item)) speedPidConfig.pid_kp = item->valuedouble;
+        if ((item = cJSON_GetObjectItem(pid_speed, "ki")) && cJSON_IsNumber(item)) speedPidConfig.pid_ki = item->valuedouble;
+        if ((item = cJSON_GetObjectItem(pid_speed, "kd")) && cJSON_IsNumber(item)) speedPidConfig.pid_kd = item->valuedouble;
+        if ((item = cJSON_GetObjectItem(pid_speed, "output_min")) && cJSON_IsNumber(item)) speedPidConfig.pid_output_min = item->valuedouble;
+        if ((item = cJSON_GetObjectItem(pid_speed, "output_max")) && cJSON_IsNumber(item)) speedPidConfig.pid_output_max = item->valuedouble;
+        if ((item = cJSON_GetObjectItem(pid_speed, "iterm_min")) && cJSON_IsNumber(item)) speedPidConfig.pid_iterm_min = item->valuedouble;
+        if ((item = cJSON_GetObjectItem(pid_speed, "iterm_max")) && cJSON_IsNumber(item)) speedPidConfig.pid_iterm_max = item->valuedouble;
+        ESP_LOGI(TAG, "Loaded Speed PID configuration");
     } else {
         ESP_LOGW(TAG, "PID configuration not found in JSON");
     }

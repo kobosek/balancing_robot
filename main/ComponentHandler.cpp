@@ -34,15 +34,22 @@ esp_err_t ComponentHandler::init() {
         return ret;
     }
 
-    pidController = std::make_shared<PIDController>();
-    ret = pidController->init(runtimeConfig);
+    anglePidController = std::make_shared<PIDController>(PIDControllerType::ANGLE);
+    ret = anglePidController->init(runtimeConfig);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to initialize PIDController");
+        ESP_LOGE(TAG, "Failed to initialize Angle PIDController");
         return ret;
     }
 
+    speedPidController = std::make_shared<PIDController>(PIDControllerType::SPEED);
+    ret = speedPidController->init(runtimeConfig);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to initialize Speed PIDController");
+        return ret;
+    }
     registerObserver(motorDriver);
-    registerObserver(pidController);
+    registerObserver(anglePidController);
+    registerObserver(speedPidController);
     registerObserver(mpu6050Manager);
 
     ESP_LOGI(TAG, "ComponentHandler initialization complete");

@@ -6,8 +6,8 @@
 #define I2C_MASTER_NUM I2C_NUM_0
 #define MPU6050_ADDR 0x68
 
-const gpio_num_t I2C_MASTER_SDA_IO = GPIO_NUM_21;
-const gpio_num_t I2C_MASTER_SCL_IO = GPIO_NUM_22;
+const gpio_num_t I2C_MASTER_SDA_IO = GPIO_NUM_6;
+const gpio_num_t I2C_MASTER_SCL_IO = GPIO_NUM_7;
 
 esp_err_t MPU6050Manager::init(const IRuntimeConfig& config) {
     ESP_LOGI(TAG, "Initializing MPU6050Manager");

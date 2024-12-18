@@ -16,11 +16,11 @@ esp_err_t MPU6050::init(const i2c_port_t i2c_port,
         .clk_source = I2C_CLK_SRC_DEFAULT,
         .glitch_ignore_cnt = 7,
         .flags = {
-            .enable_internal_pullup = false
+            .enable_internal_pullup = true
         }
     };
 
-    i2c_master_bus_handle_t bus_handle;
+        i2c_master_bus_handle_t bus_handle;
     esp_err_t ret = i2c_new_master_bus(&bus_config, &bus_handle);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to create I2C master bus: %s", esp_err_to_name(ret));

@@ -88,48 +88,8 @@
                 <button id="openConfigBtn">Open Configuration</button>
                 
                 <div id="configMenu">
-                    <h2>Configuration</h2>
-                    <div class="form-group">
-                        <label for="pidKp">PID Kp:</label>
-                        <input type="number" id="pidKp" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="pidKi">PID Ki:</label>
-                        <input type="number" id="pidKi" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="pidKd">PID Kd:</label>
-                        <input type="number" id="pidKd" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="pidTargetAngle">PID Target Angle:</label>
-                        <input type="number" id="pidTargetAngle" step="0.1">
-                    </div>
-                    <div class="form-group">
-                        <label for="pidOutputMin">PID Output Min:</label>
-                        <input type="number" id="pidOutputMin">
-                    </div>
-                    <div class="form-group">
-                        <label for="pidOutputMax">PID Output Max:</label>
-                        <input type="number" id="pidOutputMax">
-                    </div>
-                    <div class="form-group">
-                        <label for="pidItermMin">PID ITerm Min:</label>
-                        <input type="number" id="pidItermMin">
-                    </div>
-                    <div class="form-group">
-                        <label for="pidItermMax">PID ITerm Max:</label>
-                        <input type="number" id="pidItermMax">
-                    </div>
-                    <div class="form-group">
-                        <label for="mpu6050CalibrationSamples">MPU6050 Calibration Samples:</label>
-                        <input type="number" id="mpu6050CalibrationSamples">
-                    </div>
-                    <div class="form-group">
-                        <label for="mainLoopIntervalMs">Main Loop Interval (ms):</label>
-                        <input type="number" id="mainLoopIntervalMs">
-                    </div>
-                    <button id="saveConfigBtn">Save Configuration</button>
+                    <!-- Configuration buttons for Angle and Speed controllers will be dynamically added here -->
+                    <button id="saveConfigBtn" style="display: none;">Save General Configuration</button>
                 </div>
             </div>
             <div class="visualization-section">
@@ -150,118 +110,150 @@
         document.addEventListener('DOMContentLoaded', function() {
             const openConfigBtn = document.getElementById('openConfigBtn');
             const configMenu = document.getElementById('configMenu');
-            const saveConfigBtn = document.getElementById('saveConfigBtn');
             const canvas = document.getElementById('robotCanvas');
             const ctx = canvas.getContext('2d');
             let angle = 0;
             let motorOutput = 0;
             let wheelRotation = 0;
 
-            openConfigBtn.addEventListener('click', function() {
+            // Create buttons for both controllers
+            const angleConfigBtn = document.createElement('button');
+            angleConfigBtn.textContent = 'Angle PID Config';
+            angleConfigBtn.style.display = 'none';
+            configMenu.appendChild(angleConfigBtn);
+
+            const speedConfigBtn = document.createElement('button');
+            speedConfigBtn.textContent = 'Speed PID Config';
+            speedConfigBtn.style.display = 'none';
+            configMenu.appendChild(speedConfigBtn);
+
+            // Create forms for angle and speed configurations
+            const angleConfigForm = createConfigForm('pid_angle');
+            angleConfigForm.style.display = 'none';
+            configMenu.appendChild(angleConfigForm);
+
+            const speedConfigForm = createConfigForm('pid_speed');
+            speedConfigForm.style.display = 'none';
+            configMenu.appendChild(speedConfigForm);
+
+            // Show/hide configuration menu
+            openConfigBtn.addEventListener('click', function () {
+                console.log('Open Configuration button clicked'); // Debugging log
                 if (configMenu.style.display === 'none' || configMenu.style.display === '') {
+                    console.log('Showing configuration menu'); // Debugging log
                     configMenu.style.display = 'block';
-                    loadConfig();
+                    angleConfigBtn.style.display = 'block';
+                    speedConfigBtn.style.display = 'block';
                 } else {
+                    console.log('Hiding configuration menu'); // Debugging log
                     configMenu.style.display = 'none';
+                    angleConfigForm.style.display = 'none';
+                    speedConfigForm.style.display = 'none';
                 }
             });
 
-            saveConfigBtn.addEventListener('click', saveConfig);
+            // Event listeners for showing forms
+            angleConfigBtn.addEventListener('click', function() {
+                toggleForms(angleConfigForm, speedConfigForm);
+                loadConfig('pid_angle', angleConfigForm);
+            });
 
-            function loadConfig() {
+            speedConfigBtn.addEventListener('click', function() {
+                toggleForms(speedConfigForm, angleConfigForm);
+                loadConfig('pid_speed', speedConfigForm);
+            });
+
+            function createConfigForm(idPrefix) {
+                const form = document.createElement('div');
+
+                const fields = [
+                    { label: 'PID Kp', id: `${idPrefix}_kp`, step: '0.01' },
+                    { label: 'PID Ki', id: `${idPrefix}_ki`, step: '0.01' },
+                    { label: 'PID Kd', id: `${idPrefix}_kd`, step: '0.01' },
+                    { label: 'PID Output Min', id: `${idPrefix}_output_min` },
+                    { label: 'PID Output Max', id: `${idPrefix}_output_max` },
+                    { label: 'PID ITerm Min', id: `${idPrefix}_iterm_min` },
+                    { label: 'PID ITerm Max', id: `${idPrefix}_iterm_max` }
+                ];
+
+                fields.forEach(field => {
+                    const formGroup = document.createElement('div');
+                    formGroup.className = 'form-group';
+                    
+                    const label = document.createElement('label');
+                    label.textContent = field.label;
+                    formGroup.appendChild(label);
+
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.id = field.id;
+                    if (field.step) input.step = field.step;
+                    formGroup.appendChild(input);
+
+                    form.appendChild(formGroup);
+                });
+
+                const saveBtn = document.createElement('button');
+                saveBtn.textContent = 'Save Configuration';
+                saveBtn.addEventListener('click', function() {
+                    saveConfig(idPrefix, form);
+                });
+
+                form.appendChild(saveBtn);
+                return form;
+            }
+
+            function toggleForms(showForm, hideForm) {
+                showForm.style.display = 'block';
+                hideForm.style.display = 'none';
+            }
+
+            function loadConfig(type, form) {
                 fetch('/api/config')
                     .then(response => response.json())
                     .then(data => {
-                        document.getElementById('pidKp').value = data.pid.kp;
-                        document.getElementById('pidKi').value = data.pid.ki;
-                        document.getElementById('pidKd').value = data.pid.kd;
-                        document.getElementById('pidTargetAngle').value = data.pid.target_angle;
-                        document.getElementById('pidOutputMin').value = data.pid.output_min;
-                        document.getElementById('pidOutputMax').value = data.pid.output_max;
-                        document.getElementById('pidItermMin').value = data.pid.iterm_min;
-                        document.getElementById('pidItermMax').value = data.pid.iterm_max;
-                        document.getElementById('mpu6050CalibrationSamples').value = data.mpu6050.calibration_samples;
-                        document.getElementById('mainLoopIntervalMs').value = data.main_loop.interval_ms;
+                        if (data[type]) {
+                            const config = data[type];
+                            Object.keys(config).forEach(key => {
+                                const input = form.querySelector(`#${type}_${key}`);
+                                if (input) input.value = config[key];
+                            });
+                        } else {
+                            console.error(`Configuration type "${type}" not found in the response.`);
+                        }
                     })
-                    .catch(error => console.error('Error loading configuration:', error));
+                    .catch(error => console.error(`Error loading ${type} configuration:`, error));
             }
 
-            function saveConfig() {
-                const config = {
-                    pid: {
-                        kp: parseFloat(document.getElementById('pidKp').value),
-                        ki: parseFloat(document.getElementById('pidKi').value),
-                        kd: parseFloat(document.getElementById('pidKd').value),
-                        target_angle: parseFloat(document.getElementById('pidTargetAngle').value),
-                        output_min: parseFloat(document.getElementById('pidOutputMin').value),
-                        output_max: parseFloat(document.getElementById('pidOutputMax').value),
-                        iterm_min: parseFloat(document.getElementById('pidItermMin').value),
-                        iterm_max: parseFloat(document.getElementById('pidItermMax').value)
-                    },
-                    mpu6050: {
-                        calibration_samples: parseInt(document.getElementById('mpu6050CalibrationSamples').value)
-                    },
-                    main_loop: {
-                        interval_ms: parseInt(document.getElementById('mainLoopIntervalMs').value)
-                    }
-                };
+            function saveConfig(type, form) {
+                const config = {};
+                const inputs = form.querySelectorAll('input');
 
-                fetch('/api/config', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(config),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    alert('Configuration saved successfully');
-                    configMenu.style.display = 'none';
-                })
-                .catch((error) => {
-                    console.error('Error saving configuration:', error);
-                    alert('Error saving configuration');
+                inputs.forEach(input => {
+                    const key = input.id.replace(`${type}_`, '');
+                    config[key] = parseFloat(input.value);
                 });
-            }
 
-            function drawRobot() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                // Save the canvas state
-                ctx.save();
-                
-                // Move to the center bottom of the canvas
-                ctx.translate(canvas.width / 2, canvas.height - 100);
-                
-                // Rotate the entire robot based on the angle
-                ctx.rotate(angle * Math.PI / 180);
-                
-                // Draw the body
-                ctx.fillStyle = '#3498db';
-                ctx.fillRect(-30, -150, 60, 150);
-                
-                // Draw the wheel
-                ctx.fillStyle = '#34495e';
-                ctx.beginPath();
-                ctx.arc(0, 0, 50, 0, 2 * Math.PI);
-                ctx.fill();
-                
-                // Draw wheel details to show rotation
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(50 * Math.cos(wheelRotation), 50 * Math.sin(wheelRotation));
-                ctx.stroke();
-                
-                // Draw axle
-                ctx.fillStyle = '#7f8c8d';
-                ctx.beginPath();
-                ctx.arc(0, 0, 10, 0, 2 * Math.PI);
-                ctx.fill();
-                
-                // Restore the canvas state
-                ctx.restore();
+                fetch('/api/config')
+                    .then(response => response.json())
+                    .then(currentConfig => {
+                        currentConfig[type] = config;
+
+                        return fetch('/api/config', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(currentConfig),
+                        });
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Failed to save ${type} configuration`);
+                        }
+                        alert(`${type} configuration saved successfully`);
+                    })
+                    .catch(error => console.error(`Error saving ${type} configuration:`, error));
             }
 
             function updateData() {
@@ -280,14 +272,54 @@
                     motorOutput = newOutput;
                     document.getElementById('currentAngle').textContent = angle.toFixed(2);
                     document.getElementById('motorOutput').textContent = motorOutput.toFixed(2);
-                    
+
                     // Update wheel rotation
                     wheelRotation += (motorOutput / 100) * (100 / 60) * (2 * Math.PI / 60);
                     wheelRotation %= (2 * Math.PI);  // Keep it within 0 to 2π
-                    
+
                     drawRobot();
                 })
                 .catch(error => console.error('Error fetching data:', error));
+            }
+
+            function drawRobot() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Save the canvas state
+                ctx.save();
+
+                // Move to the center bottom of the canvas
+                ctx.translate(canvas.width / 2, canvas.height - 100);
+
+                // Rotate the entire robot based on the angle
+                ctx.rotate(angle * Math.PI / 180);
+
+                // Draw the body
+                ctx.fillStyle = '#3498db';
+                ctx.fillRect(-30, -150, 60, 150);
+
+                // Draw the wheel
+                ctx.fillStyle = '#34495e';
+                ctx.beginPath();
+                ctx.arc(0, 0, 50, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // Draw wheel details to show rotation
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(50 * Math.cos(wheelRotation), 50 * Math.sin(wheelRotation));
+                ctx.stroke();
+
+                // Draw axle
+                ctx.fillStyle = '#7f8c8d';
+                ctx.beginPath();
+                ctx.arc(0, 0, 10, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // Restore the canvas state
+                ctx.restore();
             }
 
             // Update data every 16ms (approximately 60fps)

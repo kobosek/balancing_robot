@@ -4,14 +4,13 @@
 
 esp_err_t PIDController::setParams(const IRuntimeConfig& config) {
     ESP_LOGI(TAG, "Setting PID parameters");
-    setKp(config.getPidKp());
-    setKi(config.getPidKi());
-    setKd(config.getPidKd());
-    setSetpoint(config.getPidTargetAngle());
-    setOutputLimits(config.getPidOutputMin(), config.getPidOutputMax());
-    setItermLimits(config.getPidItermMin(), config.getPidItermMax());   
-    ESP_LOGD(TAG, "PID parameters set - Kp: %.2f, Ki: %.2f, Kd: %.2f, Setpoint: %.2f", 
-                  m_kp, m_ki, m_kd, m_setpoint);
+    PIDConfig pidConfig = m_type == PIDControllerType::ANGLE ? config.getAnglePidConfig() : config.getSpeedPidConfig();
+    setKp(pidConfig.pid_kp);
+    setKi(pidConfig.pid_ki);
+    setKd(pidConfig.pid_kd);
+    setOutputLimits(pidConfig.pid_output_min, pidConfig.pid_output_max);
+    setItermLimits(pidConfig.pid_iterm_min, pidConfig.pid_iterm_max);   
+    ESP_LOGD(TAG, "PID parameters set - Kp: %.2f, Ki: %.2f, Kd: %.2f", m_kp, m_ki, m_kd);
     return ESP_OK;
 }
 
@@ -26,8 +25,8 @@ esp_err_t PIDController::init(const IRuntimeConfig& config) {
     return ESP_OK;
 }
 
-float PIDController::compute(float& integral, float& lastError, float currentValue, float dt) const {
-    float currentError = m_setpoint - currentValue;
+float PIDController::compute(float& setpoint, float& integral, float& lastError, float currentValue, float dt) const {
+    float currentError = setpoint - currentValue;
     
     // Proportional term
     float pTerm = m_kp * currentError;
@@ -60,11 +59,6 @@ float PIDController::compute(float& integral, float& lastError, float currentVal
 esp_err_t PIDController::onConfigUpdate(const IRuntimeConfig& config) {
     ESP_LOGI(TAG, "Updating PID Controller configuration");
     return setParams(config);
-}
-
-void PIDController::setSetpoint(float setpoint) {
-    m_setpoint = setpoint;
-    ESP_LOGD(TAG, "PID setpoint updated to %.2f", setpoint);
 }
 
 void PIDController::setKp(float kp) {

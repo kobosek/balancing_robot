@@ -22,7 +22,8 @@ public:
     const IWiFiManager& getWifiManager() { return *wifiManager; }
     IWebServer& getWebServer() { return *webServer; }
     const IMotorDriver& getMotorDriver() {return *motorDriver; }
-    const IPIDController& getPIDController() { return *pidController; }
+    const IPIDController& getAnglePIDController() { return *anglePidController; }
+    const IPIDController& getSpeedPIDController() { return *speedPidController; }
     const IMPU6050Manager& getMPU6050Manager() { return *mpu6050Manager; }
 
 private:
@@ -36,7 +37,8 @@ private:
     std::shared_ptr<IWiFiManager> wifiManager;
     std::shared_ptr<IWebServer> webServer;
     std::shared_ptr<IMotorDriver> motorDriver;
-    std::shared_ptr<IPIDController> pidController;
+    std::shared_ptr<IPIDController> anglePidController;
+    std::shared_ptr<IPIDController> speedPidController;
     std::shared_ptr<IMPU6050Manager> mpu6050Manager;
 
     std::vector<std::shared_ptr<IConfigObserver>> observers;
